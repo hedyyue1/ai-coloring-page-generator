@@ -19,6 +19,24 @@ npm run typecheck   # tsc --noEmit
 npm run build       # production build
 ```
 
+## Cloudflare Workers deployment
+
+The production adapter is `@opennextjs/cloudflare`; the Worker is named `ai-coloring-page-generator` and is published to its `workers.dev` endpoint only. The checked-in Wrangler configuration does not define routes or custom domains.
+
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+npm run cf:build       # adapt the Next.js output into .open-next/
+npm run cf:preview     # preview the already-adapted output with Wrangler
+npm run cf:deploy      # deploy the already-adapted output to workers.dev
+```
+
+`npm run cf:upload` uploads a version without deploying it, and `npm run cf:typegen` refreshes the optional Cloudflare environment types. Before a release, run `npx wrangler whoami` and verify that the authenticated identity has access to the intended account and Worker. Never commit `.dev.vars`, `.env*`, `.wrangler/`, account identifiers, or credentials.
+
+Deployment does not change the prototype boundary below: OAuth, checkout/Creem, generation, upload, and persistence remain mock frontend states rather than real integrations.
+
 ## Route map
 
 | Route | Source component |

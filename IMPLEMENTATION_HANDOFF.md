@@ -46,11 +46,39 @@ Cloudflare 部署由子卡 R8.1B (t_c253f102) 执行。
 | Build | `npm run build` | exit 0, 20/20 static prerender | `logs/build.log` |
 | .gitignore | 人工核查 | node_modules/.next/.env*/.dev.vars/.wrangler/.open-next/*.pem 均已排除 | — |
 
-## 交接给 R8.1B (Cloudflare 部署)
+## R8.1B Cloudflare Workers 生产交付
 
-- main 分支已推送 (SHA 见 kanban complete metadata)。
-- 构建产物为纯静态 prerender + 标准 Next.js server output；如走 OpenNext/Cloudflare
-  Workers，`.gitignore` 已预置 `.open-next` / `.wrangler` / `.dev.vars` 排除。
-- 无环境变量 / 密钥被提交；部署所需任何密钥由部署卡现场注入，勿写入仓库。
-- 已知边界: `/support` 表单、登录、账户、结算均为前端壳，线上展示时遵循 PRD-V5
-  “未完成不宣称完成” 原则。
+部署卡: `t_b73a3cf7`
+
+- 生产入口: <https://ai-coloring-page-generator.hedyyue1.workers.dev>
+- Cloudflare Worker: `ai-coloring-page-generator`
+- 首次生产版本标识: `5e14fd8d-be7f-4925-a6e1-47eae783bc3c`；已用 `wrangler deployments list` 独立核验当前 100% 流量版本。
+- 适配器: `@opennextjs/cloudflare`；Wrangler 配置仅启用 `workers.dev`，未绑定自定义域名。
+- 发布基线提交: `b10355dc8d2bc84ee07e43a61bf5c48aa48e489c`；本次新增的适配器配置、依赖锁定与部署文档随 R8.1B 提交推送。
+- 无环境变量、Cloudflare token、`.dev.vars`、`.env*`、`.wrangler/` 或 `.open-next/` 构建产物提交到仓库。
+
+### 真实质量门与发布证据
+
+| 门 | 命令 / 检查 | 结果 | 证据 |
+|---|---|---|---|
+| Lint | `npm run lint` | exit 0 | `../logs/r8.1b-lint.log` |
+| Typecheck | `npm run typecheck` | exit 0 | `../logs/r8.1b-typecheck.log` |
+| Next build | `npm run build` | exit 0，20/20 路由预渲染 | `../logs/r8.1b-next-build.log` |
+| OpenNext adapter | `npm run cf:build` | exit 0，Worker bundle 创建成功 | `../logs/r8.1b-adapter-build.log` |
+| 依赖审计 | `npm audit --omit=dev --audit-level=high` | exit 0，0 vulnerabilities | Kanban 运行记录 |
+| Deploy | `npx opennextjs-cloudflare deploy` | exit 0，版本已发布 | `../logs/deploy.log` |
+| Git 同步 | local `HEAD` vs `origin/main` | 发布基线一致；R8.1B 提交后再次核对 | Kanban 运行记录 |
+
+浏览器已真实访问 `/`、`/pricing`、`/photo-to-coloring-page`、`/account`、`/privacy`；页面标题与主体内容均成功渲染，控制台为 0 message / 0 JavaScript error。照片工作流的权利确认 checkbox 可切换，未选择本地文件时 `Preview generation reservation` 保持 disabled；站内导航点击可抵达 `/pricing`，价格页 4 个购买按钮继续保持 disabled，未越过产品闸口。完整记录见 `BROWSER_SMOKE.md`。
+
+关键截图:
+
+- `../evidence-r8.1b-production/01-home-desktop-full.png`
+- `../evidence-r8.1b-production/02-pricing-desktop-full.png`
+- `../evidence-r8.1b-production/03-photo-workflow-full.png`
+- `../evidence-r8.1b-production/04-account-desktop-full.png`
+- `../evidence-r8.1b-production/05-privacy-desktop-full.png`
+
+### 已知边界
+
+`/support` 表单、OAuth、账户、真实上传/生成、Creem 结算与持久化仍为前端壳或禁用态；生产部署只交付当前已审核前端，不宣称这些能力已接通。OpenNext 构建日志中的 Node.js middleware opt-in 提示不影响本次静态路由交付；Cloudflare Wrangler 仅提示存在可更新版本，不构成发布失败。
