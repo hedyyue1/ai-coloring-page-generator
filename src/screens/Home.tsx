@@ -216,7 +216,7 @@ function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
         <li><Check size={15} /> Failed requests return the credit</li>
         <li><Check size={15} /> Credits refresh monthly</li>
       </ul>
-      <button disabled>Coming soon</button>
+      <button disabled>Subscribe</button>
     </article>
   )
 }

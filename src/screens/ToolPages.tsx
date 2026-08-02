@@ -163,7 +163,7 @@ export function PricingPage() {
               <li><Check size={15} /> Credits are returned when a request fails</li>
               <li><Check size={15} /> Credits refresh each monthly cycle</li>
             </ul>
-            <button disabled>Coming soon</button>
+            <button disabled>Subscribe</button>
           </article>
         ))}
       </section>
