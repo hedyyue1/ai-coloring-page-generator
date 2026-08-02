@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="236" height="68" viewBox="0 0 236 68" role="img" aria-labelledby="linea-logo-title">
+  <title id="linea-logo-title">Linea</title>
+  <defs>
+    <linearGradient id="linea-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ea3e97"/>
+      <stop offset="1" stop-color="#8d4cf6"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="64" height="64" rx="17" fill="url(#linea-gradient)"/>
+  <path d="M19 47V25a5 5 0 0 1 5-5h19a5 5 0 0 1 5 5v22H19Z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="39" cy="29" r="4" fill="#fff"/>
+  <path d="m22 44 9-9 7 7 5-5 5 5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="80" y="47" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="800" fill="#10172b">Linea</text>
+</svg>

@@ -68,7 +68,7 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
     <main className="workspace">
       <aside className="sidebar">
         <Link className="product-logo" href="/" aria-label="Linea home">
-          <Image src="/linea-logo.svg" alt="Linea" width={118} height={34} priority />
+          <Image src="/logo.svg" alt="Linea" width={118} height={34} priority />
         </Link>
         <button className="collapse-button" aria-label="Collapse navigation"><PanelLeftClose size={17} /></button>
         <div className="sidebar-scroll">
