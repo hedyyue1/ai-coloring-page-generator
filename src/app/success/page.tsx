@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Checkout Return",
-  description: "Checkout return received \u2014 confirmation still pending.",
+  description: "Your Linea payment is being confirmed.",
 }
 
 import { CheckoutStatePage } from '@/screens/AccountPages'

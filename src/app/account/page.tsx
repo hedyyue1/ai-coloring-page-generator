@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Account",
-  description: "Account overview, identity state, credits, and subscription summary.",
+  description: "View your Linea account, credits, and subscription.",
 }
 
 export { AccountPage as default } from '@/screens/AccountPages'

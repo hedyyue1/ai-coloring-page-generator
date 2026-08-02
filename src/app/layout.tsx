@@ -1,23 +1,13 @@
 import type { Metadata } from 'next'
+import { SessionProvider } from '@/auth/session'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: {
-    default: 'Linea — Photo & Text to Coloring Page',
-    template: '%s · Linea',
-  },
-  description:
-    'Linea helps adults prepare one standard coloring activity page from an authorized photo or an original text theme.',
-  icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-  },
+  title: { default: 'Linea — AI Coloring Page Generator', template: '%s | Linea' },
+  description: 'Turn your photos and ideas into clean, printable coloring pages.',
+  icons: { icon: '/favicon.ico', shortcut: '/favicon.ico', apple: '/linea-mark.png' },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en"><body><SessionProvider>{children}</SessionProvider></body></html>
 }

@@ -82,3 +82,29 @@ Cloudflare 部署由子卡 R8.1B (t_c253f102) 执行。
 ### 已知边界
 
 `/support` 表单、OAuth、账户、真实上传/生成、Creem 结算与持久化仍为前端壳或禁用态；生产部署只交付当前已审核前端，不宣称这些能力已接通。OpenNext 构建日志中的 Node.js middleware opt-in 提示不影响本次静态路由交付；Cloudflare Wrangler 仅提示存在可更新版本，不构成发布失败。
+
+## R8.2 Account 登录边界、动态数据与品牌修复
+
+本轮根据产品复核意见完成以下修复：
+
+1. 未登录状态不渲染 Account 导航组；顶部只保留登录入口。
+2. `/account`、积分、订阅、数据删除和结算状态页统一经过 `ProtectedAccount`，游客直接访问会跳转到 `/login?next=...`。
+3. Account 用户名、邮箱、头像、套餐、积分余额、周期和积分事件统一消费 `AccountSession`；移除演示账户和固定用户数据。
+4. 新增 `/api/session` 会话边界。可信认证尚未接入时明确返回未登录，不伪造生产用户。
+5. 重写首页、工具、价格、登录、Account 和政策页的用户文案，移除面向用户暴露的内部实现及审批术语。
+6. 新增并接入 `favicon.ico`、Linea Logo、品牌标记和 Apple Touch Icon。
+
+### R8.2 质量门
+
+| 门 | 结果 |
+|---|---|
+| TypeScript | `npm run typecheck` exit 0 |
+| ESLint | `npm run lint` exit 0，0 warnings / 0 errors |
+| 生产依赖审计 | `npm audit --omit=dev --audit-level=high` exit 0，0 vulnerabilities |
+| OpenNext / Cloudflare | `npm run cf:build` exit 0，22/22 页面生成，Worker bundle 成功 |
+| Chromium 桌面与移动端 | 首页、工具、政策页渲染通过；favicon/Logo 资源均 HTTP 200；0 个致命 JavaScript 控制台签名 |
+| 游客权限回归 | Account 导航不存在；直接访问 `/account`、`/account/credits` 均进入登录页，Account 数据未泄漏 |
+
+### R8.2 真实能力边界
+
+当前代码已经建立统一会话模型与 Account 数据消费边界，但 Google OAuth、服务端 Session Store、订阅、积分持久化和生成服务仍未接通。因此生产访客会被诚实判定为未登录，不能访问 Account 页面；不得将这一前端边界描述为真实认证后端已经完成。

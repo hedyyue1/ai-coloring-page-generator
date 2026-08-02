@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Checkout Cancelled",
-  description: "Checkout was cancelled \u2014 no payment or entitlement change was created.",
+  description: "Your Linea checkout was cancelled.",
 }
 
 import { CheckoutStatePage } from '@/screens/AccountPages'

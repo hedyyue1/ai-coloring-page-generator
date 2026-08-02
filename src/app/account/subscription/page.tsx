@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Subscription",
-  description: "Subscription and renewal control center.",
+  description: "View and manage your Linea subscription.",
 }
 
 export { SubscriptionPage as default } from '@/screens/AccountPages'

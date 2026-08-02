@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Monthly coloring credit plans \u2014 proposal pending owner approval.",
+  description: "Choose the Linea coloring credit plan that fits you.",
 }
 
 export { PricingPage as default } from '@/screens/ToolPages'
