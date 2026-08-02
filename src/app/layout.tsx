@@ -8,6 +8,10 @@ export const metadata: Metadata = {
   },
   description:
     'Linea helps adults prepare one standard coloring activity page from an authorized photo or an original text theme.',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
