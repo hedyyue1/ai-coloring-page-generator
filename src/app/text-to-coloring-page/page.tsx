@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: "Text to Coloring Page",
   description: "Create a printable coloring page from your own description.",
+  alternates: { canonical: '/text-to-coloring-page' },
 }
 
 import { ToolPage } from '@/screens/ToolPages'

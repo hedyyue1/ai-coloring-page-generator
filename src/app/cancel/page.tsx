@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: "Checkout Cancelled",
   description: "Your Linea checkout was cancelled.",
+  alternates: { canonical: '/cancel' },
+  robots: { index: false, follow: false },
 }
 
 import { CheckoutStatePage } from '@/screens/AccountPages'

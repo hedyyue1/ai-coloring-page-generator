@@ -3,6 +3,7 @@ import { SessionProvider } from '@/auth/session'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://ai-coloring-page-generator.hedyyue1.workers.dev'),
   title: { default: 'Linea — AI Coloring Page Generator', template: '%s | Linea' },
   description: 'Turn your photos and ideas into clean, printable coloring pages.',
   icons: {
