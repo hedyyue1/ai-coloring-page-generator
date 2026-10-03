@@ -1,13 +1,13 @@
 import type { MetadataRoute } from 'next'
 
-const baseUrl = 'https://ai-coloring-page-generator.hedyyue1.workers.dev'
+const baseUrl = 'https://coloringpageflow.com'
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/account/', '/checkout/', '/login', '/success', '/cancel'],
+      disallow: ['/api/', '/account', '/checkout', '/login', '/success', '/cancel', '/generate', '/result', '/library', '/pricing'],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   }

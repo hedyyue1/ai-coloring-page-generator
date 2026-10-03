@@ -44,8 +44,8 @@ export function NotFoundPage() {
       <section className="not-found-page">
         <ShieldCheck size={34} />
         <p className="hero-kicker">404</p>
-        <h1>This prototype page does not exist.</h1>
-        <p>Private account, checkout, job, upload, API, and result paths must not be indexed or exposed without authentication.</p>
+        <h1>This page could not be found.</h1>
+        <p>Check the address, return to the home page or <Link href="/support">contact Support</Link>.</p>
         <Link className="primary-button" href="/">Return home <ArrowRight size={17} /></Link>
       </section>
     </ProductLayout>

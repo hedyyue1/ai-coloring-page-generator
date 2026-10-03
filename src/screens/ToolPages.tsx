@@ -14,27 +14,17 @@ import {
 } from 'lucide-react'
 import ProductLayout from '../components/ProductLayout'
 
-async function secureCheckout(planId: string) {
-  const csrf = await fetch('/api/csrf', { cache: 'no-store' })
-  if (!csrf.ok) return csrf
-  const payload = await csrf.json() as { data?: { csrf_token?: string } }
-  return fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', 'X-CSRF-Token': payload.data?.csrf_token || '', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ plan_id: planId }) })
-}
+import { operationError, userFacingError, UserFacingError } from '../lib/client-api'
 import ComparisonCard from '../components/ComparisonCard'
 
 const planRows = [
-  { id: null, name: 'Free', price: '$0', credits: '20', renewal: 'No paid renewal', fit: 'Controlled first experience', featured: false },
+  { id: null, name: 'Free', price: '$0', credits: '20', renewal: 'No paid renewal', fit: 'For adults trying the service', featured: false },
   { id: 'starter_monthly', name: 'Starter', price: '$9.99', credits: '200', renewal: 'Monthly auto-renewal', fit: 'Occasional family or teacher use', featured: false },
   { id: 'standard_monthly', name: 'Standard', price: '$19.99', credits: '500', renewal: 'Monthly auto-renewal', fit: 'Frequent household / homeschool', featured: true },
   { id: 'premium_monthly', name: 'Premium', price: '$39.99', credits: '1,500', renewal: 'Monthly auto-renewal', fit: 'High-frequency adult organizers', featured: false },
 ]
 
-const authStates = [
-  ['sign_in_started', 'The user is being sent to Google. No entitlement is created.'],
-  ['sign_in_cancelled', 'The user can safely return. No checkout or credits are created.'],
-  ['sign_in_failed', 'A generic recovery state avoids token, code, or account enumeration details.'],
-  ['account_link_attention', 'A support/recovery state prevents silent email-based account merging.'],
-]
+
 
 function PageHeader({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return (
@@ -52,7 +42,7 @@ async function generatePhotoLineArt(file: File): Promise<string> {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const element = new window.Image()
       element.onload = () => resolve(element)
-      element.onerror = () => reject(new Error('The selected image could not be read. Please choose a PNG, JPG, or WebP image.'))
+      element.onerror = () => reject(new UserFacingError('image_unreadable', 'photo'))
       element.src = objectUrl
     })
     const longestSide = 1440
@@ -63,7 +53,7 @@ async function generatePhotoLineArt(file: File): Promise<string> {
     sourceCanvas.width = width
     sourceCanvas.height = height
     const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true })
-    if (!sourceContext) throw new Error('Your browser does not support image processing.')
+    if (!sourceContext) throw new UserFacingError('browser_processing_unavailable', 'photo')
     sourceContext.drawImage(image, 0, 0, width, height)
 
     const source = sourceContext.getImageData(0, 0, width, height)
@@ -77,7 +67,7 @@ async function generatePhotoLineArt(file: File): Promise<string> {
     outputCanvas.width = width
     outputCanvas.height = height
     const outputContext = outputCanvas.getContext('2d')
-    if (!outputContext) throw new Error('Your browser does not support coloring-page output.')
+    if (!outputContext) throw new UserFacingError('browser_output_unavailable', 'photo')
     const output = outputContext.createImageData(width, height)
     for (let pixel = 0; pixel < output.data.length; pixel += 4) {
       output.data[pixel] = 255
@@ -143,8 +133,8 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
 
   const title = isPhoto ? 'Photo to Coloring Page' : 'Text to Coloring Page'
   const description = isPhoto
-    ? 'Choose a photo you have the right to use, then create a free line-art preview. PNG download requires Google sign-in and an active paid subscription.'
-    : 'Prepare one standard coloring page from an original adult-written theme.'
+    ? 'Choose a photo you own or have permission to use and create a black-and-white preview. PNG downloads require Google sign-in and an eligible paid subscription. New purchases are currently unavailable.'
+    : 'Text generation is not available right now. Try the photo preview instead.'
 
   async function handlePhotoGeneration() {
     if (!photoFile || !rightsChecked) return
@@ -154,13 +144,13 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
       await new Promise((resolve) => window.setTimeout(resolve, 0))
       const imageData = await generatePhotoLineArt(photoFile)
       const stored = await fetch('/api/results/preview', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ image_data: imageData }) })
-      if (!stored.ok) throw new Error('Unable to save the protected download copy. Your original photo was not uploaded.')
+      if (!stored.ok) throw new UserFacingError('preview_save_failed', 'photo')
       const result = await stored.json() as { preview_id?: string }
-      if (!result.preview_id) throw new Error('Unable to prepare this preview for protected download.')
+      if (!result.preview_id) throw new UserFacingError('preview_response_missing', 'photo')
       setGeneratedImage(imageData)
       setPreviewId(result.preview_id)
     } catch (error) {
-      setGenerationError(error instanceof Error ? error.message : 'Unable to create a coloring page from this image.')
+      setGenerationError(operationError(error, 'photo'))
     } finally {
       setIsGenerating(false)
     }
@@ -181,8 +171,8 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
         return
       }
       if (!response.ok) {
-        const result = await response.json() as { error?: { message?: string } }
-        throw new Error(result.error?.message || 'Download is unavailable.')
+        const result = await response.json() as { error?: { code?: string } }
+        throw new UserFacingError(result.error?.code || 'download_failed', 'download')
       }
       const url = URL.createObjectURL(await response.blob())
       const link = document.createElement('a')
@@ -194,7 +184,7 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
       URL.revokeObjectURL(url)
       setDownloadState('idle')
     } catch (error) {
-      setDownloadError(error instanceof Error ? error.message : 'Download is unavailable.')
+      setDownloadError(operationError(error, 'download'))
       setDownloadState('error')
     }
   }
@@ -202,7 +192,7 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
   return (
     <ProductLayout>
       <PageHeader
-        eyebrow={isPhoto ? 'Authorized photo workflow' : 'Original text workflow'}
+        eyebrow={isPhoto ? 'Photo preview' : 'Text themes'}
         title={title}
         text={description}
       />
@@ -213,7 +203,7 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
             <span>1</span>
             <div>
               <h2>{isPhoto ? 'Choose a local photo' : 'Write an original theme'}</h2>
-              <p>{isPhoto ? 'Your photo is processed locally in this browser and is not uploaded to our server.' : 'Do not enter student names, sensitive data, or protected characters.'}</p>
+              <p>{isPhoto ? 'Your original photo stays in your browser. A copy of the generated coloring-page PNG is sent to our server for download access checks.' : 'Text generation is not available right now. Do not enter student names, sensitive information or protected characters.'}</p>
             </div>
           </div>
 
@@ -221,7 +211,7 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
             <label className="upload-zone">
               <UploadCloud size={30} />
               <strong>{photoFile?.name || 'Choose a PNG, JPG, or WebP photo'}</strong>
-              <span>Local browser processing only — no photo upload or storage.</span>
+              <span>Your original photo stays in your browser. A copy of the generated PNG is sent to our server and may contain recognizable details. Read Privacy before continuing.</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -229,6 +219,9 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
                   const file = event.target.files?.[0] ?? null
                   setPhotoFile(file)
                   setGeneratedImage('')
+                  setPreviewId('')
+                  setDownloadError('')
+                  setDownloadState('idle')
                   setGenerationError('')
                 }}
               />
@@ -237,6 +230,8 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
             <label className="prompt-box">
               <Type size={22} />
               <textarea
+                aria-label="Original theme (text generation unavailable)"
+                disabled
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
                 placeholder="Example: A cozy garden activity page with flowers, watering cans, and butterflies"
@@ -248,24 +243,24 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
           <div className="form-step">
             <span>2</span>
             <div>
-              <h2>Confirm the input boundary</h2>
-              <p>Required before creating a local coloring-page result.</p>
+              <h2>Confirm permission to use your content</h2>
+              <p>Confirm below before continuing.</p>
             </div>
           </div>
 
           <label className="rights-check">
             <input type="checkbox" checked={rightsChecked} onChange={(event) => setRightsChecked(event.target.checked)} />
             <span>
-              I confirm I am an adult and have the right to use this input. I am not submitting student PII,
-              sensitive data, unauthorized images, protected characters, or public figures.
+              I am an adult and own this content or have permission to use it. It does not include student names or photos,
+              sensitive information, unauthorized images, protected characters or public figures.
             </span>
           </label>
 
           <div className="form-step">
             <span>3</span>
             <div>
-              <h2>{isPhoto ? 'Generate a coloring page' : 'Text generation setup'}</h2>
-              <p>{isPhoto ? 'Creates a free black-and-white line-art preview on this device. PNG download requires Google sign-in and an active paid subscription.' : 'Text-to-image generation needs a configured image provider.'}</p>
+              <h2>{isPhoto ? 'Create a photo preview' : 'Text generation unavailable'}</h2>
+              <p>{isPhoto ? 'Create a black-and-white preview on your device. Downloading requires Google sign-in and an eligible paid subscription; new purchases are unavailable. A copy of the generated PNG is sent to our server. This preview does not use credits.' : 'Text generation is not available right now. Try the photo preview instead.'}</p>
             </div>
           </div>
 
@@ -279,8 +274,9 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
               <ArrowRight size={18} />
             </button>
           ) : (
-            <button className="generate-button" disabled={!rightsChecked || prompt.trim().length < 8} onClick={() => setGenerationError('Text-to-image generation needs a configured image provider before it can run.')}>Request text generation setup <ArrowRight size={18} /></button>
+            <Link className="generate-button" href="/photo-to-coloring-page">Try the photo preview <ArrowRight size={18} /></Link>
           )}
+          {isPhoto ? <p><Link href="/privacy">Read Privacy</Link> before creating a preview.</p> : null}
           {generationError ? <p className="prototype-alert"><CircleAlert size={16} /> {generationError}</p> : null}
         </article>
 
@@ -294,15 +290,18 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
               <button className="primary-button" onClick={requestProtectedDownload} disabled={downloadState === 'working'}>
                 {downloadState === 'working' ? 'Checking download access…' : 'Download PNG'} <ArrowRight size={17} />
               </button>
-              <p className="download-gate-note">Free preview is available. PNG download requires Google sign-in and an active paid subscription.</p>
-              {downloadError ? <p className="prototype-alert"><CircleAlert size={16} /> {downloadError} <Link href="/pricing">View plans</Link></p> : null}
+              <p className="download-gate-note">Your preview is ready. PNG downloads require Google sign-in and an eligible paid subscription. New purchases are currently unavailable; do not pay to unlock a download. Download access lasts 24 hours; this does not mean every stored copy is deleted after 24 hours.</p>
+              {downloadError ? <p className="prototype-alert" role="alert"><CircleAlert size={16} /> {downloadError} <Link href="/support">Contact support</Link></p> : null}
             </article>
           ) : <ComparisonCard />}
           <article className="mini-ledger-card">
             <div><ScanLine size={18} /> {isPhoto ? 'Local processing' : 'Generation status'}</div>
-            {isPhoto ? <p><code>photo.processing</code><span>browser only</span></p> : <p><code>image.provider</code><span>not configured</span></p>}
-            <p><code>photo.storage</code><span>none</span></p>
-            <p><code>credit.balance</code><span>unchanged</span></p>
+            {isPhoto ? <>
+              <p><span>Original photo processing</span><span>In your browser</span></p>
+              <p><span>Original photo uploaded</span><span>No</span></p>
+              <p><span>Generated PNG copy</span><span>Sent to our server when you create a preview</span></p>
+              <p><span>Credits used by this preview</span><span>None</span></p>
+            </> : <p><span>Text generation</span><span>Not available right now</span></p>}
           </article>
         </aside>
       </section>
@@ -311,73 +310,51 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
 }
 
 export function PricingPage() {
-  const [busyPlan, setBusyPlan] = useState<string | null>(null)
-  const [checkoutError, setCheckoutError] = useState('')
-
-  async function beginCheckout(planId: string) {
-    setBusyPlan(planId)
-    setCheckoutError('')
-    try {
-      const response = await secureCheckout(planId)
-      const result = await response.json() as { data?: { checkout_url?: string }; checkout_url?: string; error?: { code?: string; message?: string } }
-      if (response.status === 401) {
-        window.location.assign(`/api/auth/google/start?returnTo=${encodeURIComponent(`/pricing?plan=${planId}`)}`)
-        return
-      }
-      const checkoutUrl = result.data?.checkout_url || result.checkout_url
-      if (!response.ok || !checkoutUrl) throw new Error(result.error?.message || 'Checkout is temporarily unavailable.')
-      window.location.assign(checkoutUrl)
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Checkout is temporarily unavailable.')
-      setBusyPlan(null)
-    }
-  }
-
   return (
     <ProductLayout>
       <PageHeader
-        eyebrow="Pricing · Waffo Test checkout"
-        title="Monthly credits for one standard page at a time."
-        text="Paid plans open Waffo hosted checkout in Test Mode. Entitlements appear only after a verified webhook."
+        eyebrow="Monthly plans"
+        title="Compare monthly credit allowances"
+        text="New purchases are currently unavailable. These monthly plans are shown for information only; no purchase can be made here."
       />
 
       <section className="pricing-grid full-pricing">
         {planRows.map((plan) => (
           <article className={plan.featured ? 'price-card featured' : 'price-card'} key={plan.name}>
-            {plan.featured ? <span className="popular-badge">Popular · only one</span> : null}
+            {plan.featured ? <span className="popular-badge">Recommended</span> : null}
             <div className="plan-heading"><h3>{plan.name}</h3><span>monthly</span></div>
             <div className="plan-price"><strong>{plan.price}</strong><span>USD / month</span></div>
             <p><b>{plan.credits}</b> monthly coloring credits</p>
             <p className="plan-fit">{plan.fit}</p>
             <ul>
-              <li><Check size={15} /> {plan.renewal}</li>
-              <li><Check size={15} /> Failed generation releases reservation</li>
-              <li><Check size={15} /> Entitlement requires a verified Waffo webhook</li>
+              <li><Check size={15} /> {plan.renewal}{plan.id ? '; new purchases unavailable' : ''}</li>
+              <li><Check size={15} /> Failed generation does not use a credit</li>
+              <li><Check size={15} /> Unused credits expire at the end of the period and do not carry over</li>
             </ul>
             {plan.id ? (
               <button
                 className={plan.featured ? 'plan-cta primary' : 'plan-cta'}
-                disabled={busyPlan !== null}
-                onClick={() => beginCheckout(plan.id!)}
+                disabled
               >
-                {busyPlan === plan.id ? 'Opening secure checkout…' : `Choose ${plan.name}`}
+                Purchases unavailable
               </button>
-            ) : <Link className="plan-cta" href="/login">Start free</Link>}
+            ) : <Link className="plan-cta" href="/account">View your account</Link>}
           </article>
         ))}
       </section>
-      {checkoutError ? <p className="prototype-alert"><CircleAlert size={16} /> {checkoutError}</p> : null}
+
 
       <section className="comparison-table-card">
-        <div className="table-heading"><CreditCard size={21} /><h2>Shared plan contract</h2></div>
+        <div className="table-heading"><CreditCard size={21} /><h2>How monthly credits work</h2></div>
         <div className="responsive-table">
           <table>
-            <thead><tr><th>Contract item</th><th>Production rule</th><th>Status</th></tr></thead>
+            <thead><tr><th>Topic</th><th>What it means</th><th>Availability</th></tr></thead>
             <tbody>
-              <tr><td>1 coloring_credit</td><td>One successfully delivered standard activity page</td><td>Defined</td></tr>
-              <tr><td>Failed generation</td><td>Reservation is released, not silently consumed</td><td>Defined</td></tr>
-              <tr><td>Renewal</td><td>New credits only after a verified successful webhook</td><td>Requires verified payment</td></tr>
-              <tr><td>Checkout</td><td>Server maps fixed SKU, amount, currency, user, and reference</td><td>Waffo Test</td></tr>
+              <tr><td>1 credit</td><td>One successfully delivered standard coloring activity page uses one credit. Photo and text generation share one allowance.</td><td>The current photo preview does not use credits. Text generation is unavailable.</td></tr>
+              <tr><td>Failed generation</td><td>Failed generation does not use a credit; any credit held for the attempt is returned.</td><td>The current photo preview does not use credits.</td></tr>
+              <tr><td>Renewal</td><td>New monthly credits appear only after renewal payment is confirmed. Unused credits expire at the end of the period and do not carry over.</td><td>After payment is confirmed</td></tr>
+              <tr><td>Purchases</td><td>Check the final price, taxes, billing frequency and renewal terms before any future purchase.</td><td>New purchases are currently unavailable</td></tr>
+              <tr><td>Cancellation</td><td>Review renewal dates and cancellation details before any future purchase. Check Account for existing subscription information or contact Support.</td><td><Link href="/account">Account</Link> · <Link href="/support">Support</Link> · <Link href="/refunds">Refund policy</Link></td></tr>
             </tbody>
           </table>
         </div>
@@ -387,7 +364,6 @@ export function PricingPage() {
 }
 
 export function LoginPage() {
-  const activeState = authStates[0]
   const [errorCode, setErrorCode] = useState('')
 
   useEffect(() => {
@@ -403,22 +379,20 @@ export function LoginPage() {
     return () => controller.abort()
   }, [])
 
-  const errorMessage = errorCode === 'oauth_not_configured'
-    ? 'Google sign-in still needs its production client credentials.'
-    : errorCode ? 'Google sign-in did not finish. Please try again.' : ''
+  const errorMessage = errorCode ? userFacingError(errorCode, 'login') : ''
 
   return (
     <ProductLayout>
       <section className="login-layout">
         <article className="login-card">
           <div className="login-card-icon"><LogIn size={24} /></div>
-          <h2>Continue with Google</h2>
-          <p>We request only OpenID, email, and basic profile scopes. Your session is stored in a secure, HttpOnly cookie.</p>
+          <h1>Continue with Google</h1>
+          <p>We use your Google account identifier, email address and basic profile information to recognize your account. We do not get access to your Google Photos, Drive, Gmail or contacts. Signing in does not confirm your age or permission to use a photo.</p>
           <a className="google-button" href="/api/auth/google/start?returnTo=%2Faccount">
             <span>G</span> Continue with Google
           </a>
           {errorMessage ? <p className="prototype-alert"><CircleAlert size={16} /> {errorMessage}</p> : null}
-          <div className="selected-auth-state"><code>{activeState[0]}</code><p>{activeState[1]}</p></div>
+
         </article>
       </section>
     </ProductLayout>

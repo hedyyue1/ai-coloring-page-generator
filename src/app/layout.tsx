@@ -2,13 +2,19 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://ai-coloring-page-generator.hedyyue1.workers.dev'),
+  metadataBase: new URL('https://coloringpageflow.com'),
   title: {
-    default: 'Linea — Photo & Text to Coloring Page',
+    default: 'Linea — Photo to Coloring Page',
     template: '%s · Linea',
   },
   description:
-    'Linea helps adults prepare one standard coloring activity page from an authorized photo or an original text theme.',
+    'Create a browser-based photo coloring-page preview from a photo you have permission to use. Read download requirements and content rules.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Linea',
+    title: 'Linea — Photo to Coloring Page',
+    description: 'Create a browser-based photo coloring-page preview from a photo you have permission to use. Read download requirements and content rules.',
+  },
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',

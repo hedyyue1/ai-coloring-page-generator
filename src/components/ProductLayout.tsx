@@ -9,7 +9,6 @@ import {
   Home,
   Image as ImageIcon,
   LogIn,
-  PanelLeftClose,
   Type,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -115,10 +114,6 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
           <span><ImageIcon size={20} /></span>
           <strong>Linea</strong>
         </Link>
-        <button className="collapse-button" aria-label="Collapse navigation preview">
-          <PanelLeftClose size={17} />
-        </button>
-
         <div className="sidebar-scroll">
           <NavGroup title="Create" items={mainNav} />
           <div className="sidebar-policies" aria-label="Policies">

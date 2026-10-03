@@ -7,11 +7,11 @@ import {
   BadgeCheck,
   Check,
   ChevronDown,
-  CircleAlert,
+
   CreditCard,
   FileText,
   Fingerprint,
-  ScanLine,
+
   ShieldCheck,
   Type,
   UploadCloud,
@@ -21,144 +21,80 @@ import {
 import ProductLayout from '../components/ProductLayout'
 import ComparisonCard from '../components/ComparisonCard'
 
-async function secureCheckout(planId: string) {
-  const csrf = await fetch('/api/csrf', { cache: 'no-store' })
-  if (!csrf.ok) return csrf
-  const payload = await csrf.json() as { data?: { csrf_token?: string } }
-  return fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', 'X-CSRF-Token': payload.data?.csrf_token || '', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ plan_id: planId }) })
-}
-
-type WorkflowStep = {
-  id: string
-  label: string
-  title: string
-  status: string
-  body: string
-  ledger: Array<[string, string]>
-}
-
-const workflowSteps: WorkflowStep[] = [
-  {
-    id: 'input',
-    label: 'Authorized input',
-    title: 'Confirm that the photo or idea is yours to use.',
-    status: 'policy_checked',
-    body:
-      'The flow asks for an explicit rights confirmation and blocks student records, protected characters, public figures, and unauthorized uploads before a job starts.',
-    ledger: [
-      ['input.rights_confirmed', 'recorded'],
-      ['job.policy_gate', 'passed'],
-      ['credit.balance_changed', 'not yet'],
-    ],
-  },
-  {
-    id: 'identity',
-    label: 'Google sign-in',
-    title: 'Attach monthly credits to one internal account.',
-    status: 'authenticated',
-    body:
-      'Google identity is used for account access only. The copy does not imply endorsement, age verification, ownership proof, or unrelated Google data access.',
-    ledger: [
-      ['auth.subject_verified', 'internal user'],
-      ['free.monthly_entitlement', '20 credits'],
-      ['scope.requested', 'openid email profile'],
-    ],
-  },
-  {
-    id: 'reserve',
-    label: 'Reserve 1 credit',
-    title: 'Make the deduction reversible before generation.',
-    status: 'credit_reserved',
-    body:
-      'Text and authorized photo jobs share one balance. A reservation is visible before the job runs, so a failure never feels like a silent charge.',
-    ledger: [
-      ['credit.reserved', '1'],
-      ['job.created', 'standard page'],
-      ['balance.available', '19'],
-    ],
-  },
-  {
-    id: 'settle',
-    label: 'Settle result',
-    title: 'Consume on successful delivery, release on failure.',
-    status: 'ledger_settled',
-    body:
-      'Only a persisted standard result consumes the credit. Rejection, timeout, duplicate callback, or model failure releases the reservation into the append-only ledger.',
-    ledger: [
-      ['delivery.persisted', 'consume 1'],
-      ['job.failed', 'release 1'],
-      ['ledger.mode', 'append-only'],
-    ],
-  },
+const workflowSteps = [
+  { id: 'input', label: 'Choose your photo', title: 'Choose a photo you own or have permission to use.', body: 'Confirm that you are an adult and have permission to use the photo. Do not use student information, sensitive material, protected characters or public figures.' },
+  { id: 'identity', label: 'Google sign-in', title: 'Sign in to view your account', body: 'Google sign-in identifies your account. It does not verify your age or permission to use a photo.' },
+  { id: 'preview', label: 'Create your preview', title: 'Create your preview', body: 'The current photo preview is created in your browser and does not deduct credits. A generated PNG copy is sent to our server for download and may contain recognizable details.' },
+  { id: 'result', label: 'Check your result', title: 'Check your result and download access', body: 'Review the result before printing. PNG downloads require Google sign-in and an eligible subscription. New purchases are unavailable. Download access expires after 24 hours; this does not mean every stored copy has been deleted.' },
 ]
 
 const toolCards = [
   {
     icon: UploadCloud,
-    eyebrow: 'Photo workflow',
-    title: 'Image to Coloring Page',
-    text: 'Upload an adult-owned photo, confirm usage rights, preview the reservation, then generate one standard page.',
-    meta: '1 credit on success',
+    eyebrow: 'Photo preview',
+    title: 'Photo to Coloring Page',
+    text: 'Choose a photo you have permission to use and create a browser-based preview. A generated copy is sent to our server for download.',
+    meta: 'Creating the current photo preview does not use credits.',
     href: '/photo-to-coloring-page',
   },
   {
     icon: Type,
-    eyebrow: 'Original text',
+    eyebrow: 'Text themes',
     title: 'Text to Coloring Page',
-    text: 'Write an original family, classroom, seasonal, or activity theme without uploading student PII.',
-    meta: 'Shared credit balance',
+    text: 'Text-to-coloring generation is currently unavailable. Do not enter student information or sensitive details.',
+    meta: 'Text generation unavailable',
     href: '/text-to-coloring-page',
   },
   {
     icon: WalletCards,
-    eyebrow: 'Account state',
-    title: 'Credit Ledger Preview',
-    text: 'See grant, reserve, consume, release, expire, refund reversal, and cycle state in one auditable view.',
-    meta: 'Append-only events',
+    eyebrow: 'Your account',
+    title: 'Your credits',
+    text: 'View your available balance and recent credit activity. For billing or balance questions, contact Support.',
+    meta: 'Recent credit activity',
     href: '/account',
   },
 ]
 
 const plans = [
-  { id: null, name: 'Free', price: '$0', credits: '20', fit: 'Controlled first experience after Google sign-in', featured: false },
+  { id: null, name: 'Free', price: '$0', credits: '20', fit: 'For getting started with Google sign-in', featured: false },
   { id: 'starter_monthly', name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation', featured: false },
   { id: 'standard_monthly', name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
   { id: 'premium_monthly', name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers', featured: false },
 ]
 
 const states = [
-  ['sign_in_cancelled', 'No entitlement or checkout is created.'],
-  ['payment_sync_pending', 'Return URLs never grant credits.'],
-  ['renewal_failed', 'Past-due state waits for a trusted event.'],
-  ['cancel_scheduled', 'Effective timing follows approved policy.'],
-  ['refund_pending', 'Ledger reversal waits for confirmation.'],
-  ['dispute_open', 'Entitlement review restores or revokes access.'],
+  ['Sign-in not completed', 'You can return and try signing in again.'],
+  ['Payment confirmation pending', 'Check your account before attempting another payment.'],
+  ['Renewal not confirmed', 'Contact Support if your access or balance is not what you expected.'],
+  ['Cancellation requested', 'Ask Support to confirm whether cancellation is complete and when it takes effect.'],
+  ['Refund review requested', 'A request does not mean a refund has been approved or paid.'],
+  ['Payment dispute', 'Contact Support for information about your account.'],
 ]
 
 const faqs = [
   [
-    'Why does this product require sign-in?',
-    'Monthly credits belong to an account. Sign-in makes balance, reservation, release, renewal, cancellation, refund, and dispute states explainable. It is not presented as endorsement, age verification, or proof of image rights.',
+    'Why sign in with Google?',
+    'Google sign-in lets you view your account and request an eligible download. It does not verify your age or your rights to a photo.',
   ],
   [
-    'What is one coloring_credit?',
-    'One credit represents one successfully delivered standard coloring activity page from an authorized photo or original text. Text and image jobs share one balance; failed jobs release the reservation.',
+    'What is a coloring credit?',
+    'The monthly plans use credits for coloring pages. The current browser-based photo preview does not deduct credits; text generation is unavailable.',
   ],
   [
-    'Is Free unlimited or available without an account?',
-    'No. The V5 proposal is 20 monthly credits attached to a Google account, with anti-abuse controls and cost validation still required.',
+    'What does the Free plan include?',
+    'The Free plan allowance is 20 credits per month and requires Google sign-in. Current photo previews do not deduct credits. Free does not mean unlimited use or permanent storage.',
   ],
   [
-    'When does a Waffo payment activate a plan?',
-    'Only after a verified, deduplicated webhook matches the expected user, SKU, amount, currency, and checkout intent. A return page can only show that payment confirmation is pending.',
+    'How do I check payment and subscription access?',
+    'Returning from checkout is not payment confirmation. Check Account for your subscription status and contact Support if access is missing. Do not pay again to fix a missing status.',
   ],
   [
     'Can teachers upload student materials?',
     'No student accounts, rosters, names, photos, grades, or sensitive school records. Adults may prepare general original themes for classroom use.',
   ],
   [
-    'Are download format, watermark, and retention decided?',
-    'Not yet. They remain validation items, so the interface avoids promising unlimited downloads, no watermark, 4K, privacy, or commercial rights.',
+    'What should I know about downloads and storage?',
+    'A generated PNG copy is sent to our server for download. Download access expires after 24 hours; this does not mean every stored copy has been deleted. Downloads require Google sign-in and an eligible subscription.',
   ],
 ]
 
@@ -181,7 +117,7 @@ function WorkflowPanel() {
 
   return (
     <div className="workflow-console">
-      <div className="workflow-tabs" role="tablist" aria-label="P0 workflow states">
+      <div className="workflow-tabs" role="tablist" aria-label="Photo preview steps">
         {workflowSteps.map((step, index) => (
           <button
             key={step.id}
@@ -197,25 +133,20 @@ function WorkflowPanel() {
       </div>
       <article className="workflow-detail">
         <div>
-          <p className="detail-status">{active.status}</p>
+
           <h3>{active.title}</h3>
           <p>{active.body}</p>
         </div>
-        <div className="ledger-card">
-          <div><ScanLine size={17} /> Append-only ledger</div>
-          {active.ledger.map(([event, value]) => (
-            <p key={event}><code>{event}</code><span>{value}</span></p>
-          ))}
-        </div>
+
       </article>
     </div>
   )
 }
 
-function PricingCard({ plan, busyPlan, onChoose }: { plan: (typeof plans)[number]; busyPlan: string | null; onChoose: (planId: string) => void }) {
+function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
   return (
     <article className={plan.featured ? 'price-card featured' : 'price-card'}>
-      {plan.featured ? <span className="popular-badge">Popular · only one</span> : null}
+      {plan.featured ? <span className="popular-badge">Recommended</span> : null}
       <div className="plan-heading">
         <h3>{plan.name}</h3>
         <span>monthly</span>
@@ -224,62 +155,36 @@ function PricingCard({ plan, busyPlan, onChoose }: { plan: (typeof plans)[number
       <p><b>{plan.credits}</b> monthly coloring credits</p>
       <p className="plan-fit">{plan.fit}</p>
       <ul>
-        <li><Check size={15} /> Shared credit definition</li>
-        <li><Check size={15} /> Failure releases reservation</li>
-        <li><Check size={15} /> Entitlement requires a verified webhook</li>
+        <li><Check size={15} /> View your credits in Account</li>
+        <li><Check size={15} /> Current photo previews do not deduct credits.</li>
+        <li><Check size={15} /> Check your account for confirmed access.</li>
       </ul>
       {plan.id ? (
-        <button
-          className={plan.featured ? 'plan-cta primary' : 'plan-cta'}
-          disabled={busyPlan !== null}
-          onClick={() => onChoose(plan.id!)}
-        >
-          {busyPlan === plan.id ? 'Opening secure checkout…' : `Choose ${plan.name}`}
-        </button>
-      ) : <Link className="plan-cta" href="/login">Start free</Link>}
+        <button className={plan.featured ? 'plan-cta primary' : 'plan-cta'} disabled>New purchases unavailable</button>
+      ) : <Link className="plan-cta" href="/photo-to-coloring-page">Create a photo preview</Link>}
     </article>
   )
 }
 
 export default function Home() {
-  const [busyPlan, setBusyPlan] = useState<string | null>(null)
-  const [checkoutError, setCheckoutError] = useState('')
 
-  async function beginCheckout(planId: string) {
-    setBusyPlan(planId)
-    setCheckoutError('')
-    try {
-      const response = await secureCheckout(planId)
-      const result = await response.json() as { data?: { checkout_url?: string }; checkout_url?: string; error?: { message?: string } }
-      if (response.status === 401) {
-        window.location.assign(`/api/auth/google/start?returnTo=${encodeURIComponent(`/?plan=${planId}#pricing`)}`)
-        return
-      }
-      const checkoutUrl = result.data?.checkout_url || result.checkout_url
-      if (!response.ok || !checkoutUrl) throw new Error(result.error?.message || 'Checkout is temporarily unavailable.')
-      window.location.assign(checkoutUrl)
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Checkout is temporarily unavailable.')
-      setBusyPlan(null)
-    }
-  }
 
   return (
     <ProductLayout>
       <section className="hero-panel">
         <div className="hero-copy">
-          <p className="hero-kicker">AI Coloring Page Generator · adult-focused</p>
-          <h1>Turn an <span>authorized photo</span> or original idea into one coloring activity page.</h1>
+          <p className="hero-kicker">Photo to Coloring Page · for adults</p>
+          <h1>Turn a <span>photo you have permission to use</span> into a coloring-page preview.</h1>
           <p className="hero-subtitle">
-            A guided workflow with clear monthly credits and account status before they apply.
+            Create a photo preview. Downloads require Google sign-in and an eligible subscription; new purchases are currently unavailable.
           </p>
           <div className="hero-actions">
             <Link href="/photo-to-coloring-page" className="primary-button">Start with a photo <ArrowRight size={18} /></Link>
             <Link href="/account" className="secondary-button">See how credits work</Link>
           </div>
           <div className="hero-assurance">
-            <span><Fingerprint size={15} /> Google sign-in for account only</span>
-            <span><ShieldCheck size={15} /> Rights confirmation before upload</span>
+            <span><Fingerprint size={15} /> Use Google to access your account</span>
+            <span><ShieldCheck size={15} /> Use only photos you own or have permission to use.</span>
           </div>
         </div>
         <ComparisonCard />
@@ -303,78 +208,73 @@ export default function Home() {
       <section className="panel-section" id="workflow">
         <SectionHeading
           eyebrow="How it works"
-          title="A tool-style flow with ledger states built in."
-          text="The familiar generator pattern is retained, but every critical transition is named and inspectable."
+          title="How to create a photo preview"
+          text="Choose a permitted photo, confirm your rights and create a preview. Check download requirements before continuing."
         />
         <WorkflowPanel />
       </section>
 
       <section className="credit-panel" id="credits">
         <div className="credit-copy">
-          <p className="hero-kicker">One credit contract</p>
-          <h2>One successful standard page consumes one credit. Failure releases it.</h2>
+          <p className="hero-kicker">Photo previews and credits</p>
+          <h2>Current photo previews do not deduct credits.</h2>
           <p>
-            No split text bucket, hidden image multiplier, return-url activation, or silent deduction. The append-only ledger is the product’s source of truth.
+            View your current balance in Account. Returning from checkout does not confirm a payment.
           </p>
         </div>
-        <div className="credit-events">
-          <span>grant</span><ArrowRight size={15} />
-          <span>reserve</span><ArrowRight size={15} />
-          <span>consume</span><ArrowRight size={15} />
-          <span>release</span><ArrowRight size={15} />
-          <span>expire</span>
-        </div>
+
       </section>
 
       <section className="panel-section boundary-section">
         <SectionHeading
-          eyebrow="Input boundary"
+          eyebrow="Choose suitable content"
           title="Designed for adults preparing one meaningful page."
         />
         <div className="boundary-grid">
           <article>
             <ShieldCheck size={23} />
-            <h3>Allowed with confirmation</h3>
-            <p>Adult-owned family photos, original written themes, general classroom topics, and non-sensitive activity ideas.</p>
+            <h3>Photos you can use</h3>
+            <p>Photos you have permission to use, without student information or sensitive details. Text generation is currently unavailable.</p>
           </article>
           <article>
             <X size={23} />
-            <h3>Not allowed in P0</h3>
-            <p>Student PII, unauthorized images, protected characters, public figures, sensitive data, batch books, teams, or commercial promises.</p>
+            <h3>What not to submit</h3>
+            <p>Do not use student information, sensitive details, unauthorized images, protected characters or public figures. This service does not include batch creation, team accounts or commercial publishing permission.</p>
           </article>
           <article>
             <BadgeCheck size={23} />
-            <h3>Verified before claimed</h3>
-            <p>Format, retention, downloads, watermark, fairness limits, cancellation, refund, and regional payment details wait for approved evidence.</p>
+            <h3>Know what is included</h3>
+            <p>Current photo results are PNG previews. Downloads require Google sign-in and an eligible subscription. For cancellation, refund or privacy requests, visit Support.</p>
           </article>
         </div>
       </section>
 
       <section className="panel-section pricing-section" id="pricing">
         <SectionHeading
-          eyebrow="Pricing · Waffo Test checkout"
-          title="Four monthly tiers, Standard as the single recommendation."
-          text="Choose a paid plan to open secure Waffo checkout. Sign-in is required before a checkout can be created."
+          eyebrow="Monthly plans — new purchases unavailable"
+          title="Compare monthly plans"
+          text="New purchases are currently unavailable. You can compare monthly plans below; no purchase can be made here."
         />
         <div className="pricing-grid">
-          {plans.map((plan) => <PricingCard key={plan.name} plan={plan} busyPlan={busyPlan} onChoose={beginCheckout} />)}
+          {plans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
         </div>
-        {checkoutError ? <p className="prototype-alert"><CircleAlert size={16} /> {checkoutError}</p> : null}
+
         <div className="pricing-note">
           <CreditCard size={18} />
-          Paid tiers renew monthly. Credits are activated only after a verified Waffo webhook confirms payment.
+          These paid plans are monthly subscriptions. New purchases are unavailable. Before any purchase becomes available, review renewal, cancellation and total-price details.
         </div>
       </section>
 
       <section className="panel-section states-section">
         <SectionHeading
-          eyebrow="Account states"
-          title="Edge cases get their own visible interface."
+          eyebrow="Account and payment help"
+          title="Need help with your account?"
+          text="These are help topics, not your current account status. Visit Account for your details or contact Support."
         />
         <div className="state-grid">
           {states.map(([state, text]) => (
             <article key={state}>
-              <code>{state}</code>
+              <h3>{state}</h3>
               <p>{text}</p>
             </article>
           ))}
@@ -384,7 +284,7 @@ export default function Home() {
       <section className="panel-section faq-section" id="faq">
         <SectionHeading
           eyebrow="FAQ"
-          title="Clear answers before someone trusts the workflow."
+          title="Questions about previews, downloads and your account"
         />
         <div className="faq-list">
           {faqs.map(([question, answer], index) => (
@@ -402,15 +302,15 @@ export default function Home() {
 
       <section className="final-cta">
         <div>
-          <p>Ready when the evidence is</p>
-          <h2>Start with an authorized photo — keep every account state explainable.</h2>
+          <p>Create a photo preview</p>
+          <h2>Start with a photo you have permission to use.</h2>
         </div>
-        <Link href="/photo-to-coloring-page">Open photo workflow <ArrowRight size={18} /></Link>
+        <Link href="/photo-to-coloring-page">Try the photo preview <ArrowRight size={18} /></Link>
       </section>
 
       <footer className="footer-bar">
-        <span>Linea · adult-focused coloring workflow prototype</span>
-        <span><FileText size={14} /> Policy pages are reachable from the sidebar</span>
+        <span>Linea · coloring activities for adults</span>
+        <span><FileText size={14} /> <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/acceptable-use">Acceptable Use</Link> · <Link href="/refunds">Refunds and cancellation</Link> · <Link href="/support">Support</Link> · <Link href="/account">Account and data requests</Link></span>
       </footer>
     </ProductLayout>
   )

@@ -5,7 +5,7 @@ import { RefreshCcw } from 'lucide-react'
 
 function ColoredScene() {
   return (
-    <svg viewBox="0 0 640 420" role="img" aria-label="Stylized authorized family photo illustration">
+    <svg viewBox="0 0 640 420" role="img" aria-label="Illustrated scene used as an example">
       <defs>
         <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor="#9cc9e8" />
@@ -37,7 +37,7 @@ function ColoredScene() {
 
 function LineScene() {
   return (
-    <svg viewBox="0 0 640 420" role="img" aria-label="Coloring page line art result">
+    <svg viewBox="0 0 640 420" role="img" aria-label="Illustrative line-art example, not a generated result">
       <rect width="640" height="420" fill="#fff" />
       <g fill="none" stroke="#151827" strokeLinecap="round" strokeLinejoin="round" strokeWidth="9">
         <circle cx="506" cy="88" r="46" />
@@ -62,7 +62,7 @@ export default function ComparisonCard() {
   const [compare, setCompare] = useState(52)
 
   return (
-    <article className="comparison-card" aria-label="Interactive photo to coloring page comparison">
+    <article className="comparison-card" aria-label="Compare illustrative color and line-art examples">
       <div className="comparison-stage">
         <div className="scene-layer"><ColoredScene /></div>
         <div className="scene-layer line-layer" style={{ clipPath: `inset(0 0 0 ${compare}%)` }}>
@@ -71,13 +71,13 @@ export default function ComparisonCard() {
         <div className="comparison-divider" style={{ left: `${compare}%` }}>
           <span><RefreshCcw size={17} /></span>
         </div>
-        <span className="scene-label photo-label">Authorized photo</span>
-        <span className="scene-label line-label">Standard page</span>
+        <span className="scene-label photo-label">Illustrative example</span>
+        <span className="scene-label line-label">Line-art example</span>
       </div>
       <div className="comparison-control">
-        <span>Photo</span>
+        <span>Color example</span>
         <input
-          aria-label="Compare photo and coloring page"
+          aria-label="Compare illustrative color and line-art examples"
           type="range"
           min="18"
           max="82"

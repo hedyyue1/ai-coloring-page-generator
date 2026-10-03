@@ -6,14 +6,14 @@
   --surface-soft: #f9fbff;
   --navy: #10182f;
   --ink: #26314d;
-  --muted: #6b748d;
-  --muted-light: #98a0b6;
-  --pink: #ec3f8c;
+  --muted: #626c84;
+  --muted-light: #667089;
+  --pink: #bf266b;
   --pink-dark: #d92f7c;
-  --purple: #8a5cf6;
+  --purple: #7042c5;
   --violet-soft: #f0ebff;
   --pink-soft: #fff0f7;
-  --green: #20a47c;
+  --green: #137655;
   --green-soft: #e9f9f3;
   --amber: #f6a72f;
   --amber-soft: #fff6e5;
@@ -1987,7 +1987,7 @@ button {
   background: var(--gradient);
 }
 
-.login-card h2 {
+.login-card h1 {
   margin: 22px 0 0;
   font-family: 'Sora', sans-serif;
   font-size: 1.65rem;

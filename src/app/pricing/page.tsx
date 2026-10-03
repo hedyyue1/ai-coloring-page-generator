@@ -1,9 +1,16 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Monthly coloring credit plans — proposal pending owner approval.",
+  title: "Monthly Plans",
+  description: "Compare monthly plans and credit allowances. New purchases are currently unavailable.",
   alternates: { canonical: '/pricing' },
+  openGraph: {
+    type: 'website',
+    siteName: 'Linea',
+    title: 'Monthly Plans · Linea',
+    description: 'Compare monthly plans and credit allowances. New purchases are currently unavailable.',
+    url: '/pricing',
+  },
   robots: { index: false, follow: true },
 }
 

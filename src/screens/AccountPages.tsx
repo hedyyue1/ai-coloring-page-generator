@@ -5,7 +5,6 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import {
   ArrowRight,
-  Check,
   CircleAlert,
   CreditCard,
   FileText,
@@ -45,6 +44,25 @@ const planDetails: Record<string, { name: string; price: string; credits: number
   premium_monthly: { name: 'Premium', price: '$39.99 / month', credits: 1500 },
 }
 
+const subscriptionLabels: Record<string, string> = {
+  active: 'Active', paid: 'Active', trialing: 'Subscription status needs review',
+  pending: 'Payment confirmation pending', past_due: 'Payment needs attention',
+  renewal_failed: 'Payment needs attention', cancel_scheduled: 'Cancellation scheduled',
+  canceling: 'Cancellation scheduled', cancelled: 'Cancelled', canceled: 'Cancelled',
+  refund_pending: 'Refund under review', refunded: 'Refunded',
+  dispute_open: 'Payment concern under review', expired: 'Expired',
+}
+
+const creditActivityLabels: Record<string, string> = {
+  grant: 'Credits added', reserve: 'Credits held', consume: 'Credits used',
+  release: 'Credits returned', expire: 'Credits expired',
+  reverse: 'Credit adjustment', refund_reversal: 'Credit adjustment', adjust: 'Credit adjustment',
+}
+
+function knownLabel(labels: Record<string, string>, value: string, fallback: string): string {
+  return Object.prototype.hasOwnProperty.call(labels, value) ? labels[value] : fallback
+}
+
 function PageHeader({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return (
     <section className="subpage-header compact">
@@ -75,7 +93,7 @@ function useAccountSnapshot(): AccountSnapshot {
         if (active) setSnapshot({ user: result.user ?? null, creditLedger: result.creditLedger ?? [], error: '' })
       } catch {
         // A failed refresh is not evidence that the authenticated session ended.
-        if (active) setSnapshot((previous) => ({ ...previous, error: 'Account state could not be loaded. Please try again shortly.' }))
+        if (active) setSnapshot((previous) => ({ ...previous, error: 'We could not load your account. Try again shortly. If the problem continues, contact Support.' }))
       } finally {
         inFlight = false
         controller = null
@@ -108,7 +126,7 @@ function AccountContent({ snapshot, returnTo, children }: { snapshot: AccountSna
     return (
       <section className="checkout-state-page"><article className="checkout-state-card">
         <h2>Sign in to view your account</h2>
-        <p>This page only displays data for the currently authenticated Google account.</p>
+        <p>Sign in with the Google account you use for Linea to view its details.</p>
         <a className="primary-button" href={`/api/auth/google/start?returnTo=${encodeURIComponent(returnTo)}`}>Continue with Google</a>
       </article></section>
     )
@@ -131,7 +149,7 @@ export function AccountPage() {
 
   return (
     <ProductLayout>
-      <PageHeader eyebrow="Account" title="Your account." text="Manage your profile, subscription, credits, and account data in one place." />
+      <PageHeader eyebrow="Account" title="Your account." text="View your profile, subscription and credits. Contact Support for cancellation or account-data requests." />
       <AccountContent snapshot={snapshot} returnTo="/account">{(user) => {
         return <>
           <section className="account-summary-grid">
@@ -145,7 +163,7 @@ export function AccountPage() {
             <SubscriptionContent user={user} />
           </section>
           <section className="account-detail-section" aria-labelledby="credits-heading">
-            <h2 id="credits-heading">Credit ledger</h2>
+            <h2 id="credits-heading">Credit activity</h2>
             <CreditsContent user={user} creditLedger={snapshot.creditLedger} />
           </section>
           <section className="account-detail-section" aria-labelledby="deletion-heading">
@@ -160,12 +178,13 @@ export function AccountPage() {
 
 function SubscriptionContent({ user }: { user: AccountUser }) {
   const subscription = user.subscription
-  const plan = subscription ? planDetails[subscription.planId] : null
+  const plan = subscription && Object.prototype.hasOwnProperty.call(planDetails, subscription.planId) ? planDetails[subscription.planId] : null
   return (
     <article className="current-plan-card">
-      <h3>{plan ? `${plan.name} · ${plan.price}` : subscription ? subscription.planId : 'No paid subscription'}</h3>
-      <p>Status: {subscription?.status || 'Not subscribed'}</p>
-      <p>{subscription?.periodEnd ? `Current period ends ${formatDate(subscription.periodEnd)}` : 'No renewal date'}</p>
+      <h3>{plan ? `${plan.name} · ${plan.price}` : subscription?.planId === 'free' ? 'Free' : subscription ? 'Unknown plan — contact Support' : 'No paid subscription'}</h3>
+      <p>Status: {subscription ? knownLabel(subscriptionLabels, subscription.status, 'Status unavailable — contact Support') : 'Not subscribed'}</p>
+      {subscription?.periodEnd ? <p>Current period ends {formatDate(subscription.periodEnd)}</p> : null}
+      <p>Renewal information is not available here. <Link href="/support">Contact Support for billing details.</Link></p>
       <Link className="primary-button" href="/pricing">Compare plans</Link>
     </article>
   )
@@ -176,13 +195,14 @@ function CreditsContent({ user, creditLedger }: { user: AccountUser; creditLedge
   return (
     <article className="ledger-table-card">
       <p className="table-heading">Available credits: <strong>{user.availableCredits}</strong></p>
+      <p>Recent credit activity (latest 5)</p>
       <div className="responsive-table">
         <table>
-          <thead><tr><th>Date</th><th>Event</th><th>Amount</th></tr></thead>
+          <thead><tr><th>Date</th><th>Activity</th><th>Amount</th></tr></thead>
           <tbody>
             {latestEntries.length ? latestEntries.map((entry) => (
-              <tr key={entry.id}><td>{formatDate(entry.createdAt)}</td><td>{entry.eventType}</td><td>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</td></tr>
-            )) : <tr><td colSpan={3}>No credit events have been recorded for this account.</td></tr>}
+              <tr key={entry.id}><td>{formatDate(entry.createdAt)}</td><td>{knownLabel(creditActivityLabels, entry.eventType, 'Activity information unavailable')}</td><td>{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</td></tr>
+            )) : <tr><td colSpan={3}>No credit activity to show.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -194,7 +214,7 @@ function DataDeletionContent() {
   return (
     <article className="deletion-request-card">
       <Trash2 size={25} />
-      <p>Self-service deletion is not available. Deletion requires confirmation, and some payment records may be retained where legally required.</p>
+      <p>Self-service deletion is unavailable. Contact Support to request account-data deletion. We may need to verify the account is yours. A request does not immediately delete data or cancel a subscription; some payment records may be retained where required by law.</p>
       <Link href="/support">Contact support <ArrowRight size={16} /></Link>
     </article>
   )
@@ -205,42 +225,26 @@ export function CheckoutStatePage({ type }: { type: 'pending' | 'success' | 'can
 
   const config = {
     success: {
-      label: 'return_success',
-      title: 'Return received — confirmation still pending.',
-      text: 'This page waits for the verified webhook before showing an active subscription or granted credits.',
-      action: 'View subscription',
+      title: 'Check your payment in Account',
+      text: 'Returning from checkout does not confirm payment. Check Account for your subscription and credits before trying another payment.',
+      action: 'View account',
       href: '/account',
     },
     cancel: {
-      label: 'return_cancel',
-      title: 'Checkout was cancelled.',
-      text: 'No payment, subscription, credit grant, or entitlement change was created.',
-      action: 'Return to pricing',
-      href: '/pricing',
+      title: 'You returned from checkout.',
+      text: 'You left checkout without completing it here. This page does not confirm whether a charge occurred. Check Account and contact Support if you believe you were charged.',
+      action: 'View account',
+      href: '/account',
     },
   }[type]
-
-  const steps = [
-    ['checkout_intent_created', true],
-    ['creem_hosted_checkout', true],
-    [type === 'cancel' ? 'return_cancel' : 'return_success', true],
-    ['webhook_signature_verified', false],
-    ['subscription_entitlement_changed', false],
-  ]
 
   return (
     <ProductLayout>
       <section className="checkout-state-page">
         <article className="checkout-state-card">
           <span className="checkout-icon"><CreditCard size={28} /></span>
-          <p className="detail-status">{config.label}</p>
           <h1>{config.title}</h1>
           <p>{config.text}</p>
-          <div className="checkout-timeline">
-            {steps.map(([step, done]) => (
-              <div className={done ? 'done' : ''} key={step as string}>{done ? <Check size={16} /> : <CircleAlert size={16} />}<code>{step}</code></div>
-            ))}
-          </div>
           <div className="button-row center">
             <Link className="primary-button" href={config.href}>{config.action}</Link>
             <Link className="secondary-button" href="/support"><FileText size={16} /> Support</Link>

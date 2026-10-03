@@ -81,7 +81,7 @@ export const policies: Record<PolicyType, Policy> = {
   },
   support: {
     eyebrow: 'Support', title: 'Tell us what went wrong',
-    intro: 'Get help with Google sign-in, subscription access, a coloring-page result, billing or a privacy concern. Describe what happened and include a reference if you have one. You do not need to sign in to send a support request.',
+    intro: 'Get help with Google sign-in, subscriptions, coloring pages, billing or privacy. Tell us what happened and include a request or order reference if you have one. You do not need to sign in to contact Support.',
     sections: [
       section('Account and sign-in', 'Tell us which page you were using and what happened when you tried to sign in. Include the error message if it does not contain private information. Do not send your Google password, sign-in code or a full sign-in link.'),
       section('Payments and subscriptions', 'Use the email associated with your Linea account and include an order or subscription reference if available. For a possible charge, include the date, amount and currency. Do not make another purchase just to fix missing access. See [Refunds and cancellation](/refunds) for billing requests.'),
