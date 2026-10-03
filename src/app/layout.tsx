@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://ai-coloring-page-generator.hedyyue1.workers.dev'),
   title: {
     default: 'Linea — Photo & Text to Coloring Page',
     template: '%s · Linea',

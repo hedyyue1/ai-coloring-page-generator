@@ -1,21 +1,16 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  BadgeCheck,
   CreditCard,
   Home,
   Image as ImageIcon,
   LogIn,
   PanelLeftClose,
-  Route,
-  ShieldCheck,
-  Trash2,
   Type,
-  UserRound,
-  WalletCards,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -40,13 +35,6 @@ const mainNav: ProductNavItem[] = [
   { label: 'Pricing', href: '/pricing', icon: CreditCard },
 ]
 
-const accountNav: ProductNavItem[] = [
-  { label: 'Login', href: '/login', icon: LogIn },
-  { label: 'Account', href: '/account', icon: UserRound },
-  { label: 'Subscription', href: '/account/subscription', icon: BadgeCheck },
-  { label: 'Credit Ledger', href: '/account/credits', icon: WalletCards },
-  { label: 'Data Deletion', href: '/account/data-deletion', icon: Trash2 },
-]
 
 const policyLinks = [
   ['Privacy', '/privacy'],
@@ -77,7 +65,48 @@ function NavGroup({ title, items }: { title: string; items: ProductNavItem[] }) 
 
 export default function ProductLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const isAccountArea = pathname?.startsWith('/account')
+  const [accountUser, setAccountUser] = useState<{ email?: string | null; displayName?: string | null } | null | undefined>(undefined)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
+  const accountButtonRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    let active = true
+    fetch('/api/me', { cache: 'no-store' })
+      .then(async (response) => await response.json() as { user?: { email?: string | null; displayName?: string | null } | null })
+      .then((result) => { if (active) setAccountUser(result.user ?? null) })
+      .catch(() => { if (active) setAccountUser(null) })
+    return () => { active = false }
+  }, [pathname])
+
+  useEffect(() => setAccountMenuOpen(false), [pathname])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return
+    const closeOutside = (event: PointerEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) setAccountMenuOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAccountMenuOpen(false)
+        accountButtonRef.current?.focus()
+      }
+    }
+    accountMenuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+    document.addEventListener('pointerdown', closeOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
+
+  async function signOut() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.assign('/login')
+  }
+
+  const accountLabel = accountUser?.displayName || accountUser?.email || 'Signed-in user'
 
   return (
     <main className="workspace">
@@ -92,11 +121,6 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
 
         <div className="sidebar-scroll">
           <NavGroup title="Create" items={mainNav} />
-          <NavGroup title="Account" items={accountNav} />
-          <div className="sidebar-note">
-            <ShieldCheck size={17} />
-            <p><strong>Frontend prototype</strong> No real OAuth, checkout, generation, or persistence is connected.</p>
-          </div>
           <div className="sidebar-policies" aria-label="Policies">
             {policyLinks.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}
           </div>
@@ -104,14 +128,42 @@ export default function ProductLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="workspace-main">
-        <header className="topbar">
-          <div className="status-pill"><span /> V5 prototype · checkout disabled</div>
-          <div className="topbar-actions">
-            <Link className="state-link" href="/checkout/pending"><Route size={16} /> Payment states</Link>
-            {isAccountArea ? (
-              <Link className="login-button account" href="/account"><UserRound size={17} /> Demo account</Link>
+      <header className="topbar">
+      <div className="topbar-actions">
+            {accountUser ? (
+              <div className="account-menu" ref={accountMenuRef}>
+                <button
+                  ref={accountButtonRef}
+                  aria-expanded={accountMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label="Account menu"
+                  aria-controls="account-menu-actions"
+                  className="account-name-button"
+                  onClick={() => setAccountMenuOpen((open) => !open)}
+                  type="button"
+                >
+                  {accountLabel}
+                </button>
+                {accountMenuOpen ? (
+                  <div className="account-menu-popover" id="account-menu-actions" role="menu" aria-label="Account actions"
+                    onKeyDown={(event) => {
+                      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+                        event.preventDefault()
+                        const items = Array.from(event.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+                        const index = items.indexOf(document.activeElement as HTMLElement)
+                        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length
+                        items[next]?.focus()
+                      } else if (event.key === 'Tab') setAccountMenuOpen(false)
+                    }}>
+                    <Link href="/account" role="menuitem" onClick={() => setAccountMenuOpen(false)}>Account</Link>
+                    <button type="button" role="menuitem" onClick={signOut}>Sign out</button>
+                  </div>
+                ) : null}
+              </div>
+            ) : accountUser === null ? (
+              <Link className="login-button" href="/login"><LogIn size={17} /> Google sign-in</Link>
             ) : (
-              <Link className="login-button" href="/login"><LogIn size={17} /> Login prototype</Link>
+              <span className="state-link" aria-live="polite">Checking sign-in…</span>
             )}
           </div>
         </header>

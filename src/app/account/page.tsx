@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: "Account",
-  description: "Account overview, identity state, credits, and subscription summary.",
+  description: "Manage your profile, subscription, credit ledger, and account data in one place.",
+  alternates: { canonical: '/account' },
 }
 
 export { AccountPage as default } from '@/screens/AccountPages'

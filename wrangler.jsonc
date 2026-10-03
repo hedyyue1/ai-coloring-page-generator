@@ -4,12 +4,47 @@
   "account_id": "7ac73e8bae4d2c359e216e91f062565e",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-02",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
   "workers_dev": true,
   "preview_urls": true,
   "assets": {
     "directory": ".open-next/assets",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-coloring-page-generator-db",
+      "database_id": "22472094-efaf-402f-8526-6cf395cdeb59",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "GENERATED_PREVIEWS",
+      "bucket_name": "linea-generated-previews"
+    }
+  ],
+  "vars": {
+    "APP_ENV": "production",
+    "SITE_URL": "https://ai-coloring-page-generator.hedyyue1.workers.dev",
+    "GOOGLE_REDIRECT_URI": "https://ai-coloring-page-generator.hedyyue1.workers.dev/api/auth/google/callback",
+    "AUTH_ENABLED": "true",
+    "CREEM_MODE": "test",
+    "PAYMENTS_TEST_MODE": "true",
+    "PAYMENTS_ENABLED": "true",
+    "GENERATION_ENABLED": "false",
+    "GENERATION_TEST_MODE": "true",
+    "WAFFO_MODE": "test",
+    "WAFFO_MERCHANT_ID": "MER_1o1ESHUOCt54pyCYz9wHba",
+    "WAFFO_STORE_ID_TEST": "STO_1OBpgvNjAuyqj4PuUEZ9y9",
+    "WAFFO_PRODUCT_STARTER_TEST": "PROD_2b3n84hSnclpmYy1VHik4e",
+    "WAFFO_PRODUCT_STANDARD_TEST": "PROD_3l7AmLeeoQu6WZ9Ug9ylvO",
+    "WAFFO_PRODUCT_PREMIUM_TEST": "PROD_2CoNUqeEuiuv5m1GWtabBZ"
   },
   "observability": {
     "enabled": true

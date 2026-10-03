@@ -7,6 +7,7 @@ import {
   BadgeCheck,
   Check,
   ChevronDown,
+  CircleAlert,
   CreditCard,
   FileText,
   Fingerprint,
@@ -19,6 +20,13 @@ import {
 } from 'lucide-react'
 import ProductLayout from '../components/ProductLayout'
 import ComparisonCard from '../components/ComparisonCard'
+
+async function secureCheckout(planId: string) {
+  const csrf = await fetch('/api/csrf', { cache: 'no-store' })
+  if (!csrf.ok) return csrf
+  const payload = await csrf.json() as { data?: { csrf_token?: string } }
+  return fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', 'X-CSRF-Token': payload.data?.csrf_token || '', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ plan_id: planId }) })
+}
 
 type WorkflowStep = {
   id: string
@@ -107,15 +115,15 @@ const toolCards = [
     title: 'Credit Ledger Preview',
     text: 'See grant, reserve, consume, release, expire, refund reversal, and cycle state in one auditable view.',
     meta: 'Append-only events',
-    href: '/account/credits',
+    href: '/account',
   },
 ]
 
 const plans = [
-  { name: 'Free', price: '$0', credits: '20', fit: 'Controlled first experience after Google sign-in' },
-  { name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation' },
-  { name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
-  { name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers' },
+  { id: null, name: 'Free', price: '$0', credits: '20', fit: 'Controlled first experience after Google sign-in', featured: false },
+  { id: 'starter_monthly', name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation', featured: false },
+  { id: 'standard_monthly', name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
+  { id: 'premium_monthly', name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers', featured: false },
 ]
 
 const states = [
@@ -141,7 +149,7 @@ const faqs = [
     'No. The V5 proposal is 20 monthly credits attached to a Google account, with anti-abuse controls and cost validation still required.',
   ],
   [
-    'When does a Creem payment activate a plan?',
+    'When does a Waffo payment activate a plan?',
     'Only after a verified, deduplicated webhook matches the expected user, SKU, amount, currency, and checkout intent. A return page can only show that payment confirmation is pending.',
   ],
   [
@@ -204,13 +212,13 @@ function WorkflowPanel() {
   )
 }
 
-function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
+function PricingCard({ plan, busyPlan, onChoose }: { plan: (typeof plans)[number]; busyPlan: string | null; onChoose: (planId: string) => void }) {
   return (
     <article className={plan.featured ? 'price-card featured' : 'price-card'}>
       {plan.featured ? <span className="popular-badge">Popular · only one</span> : null}
       <div className="plan-heading">
         <h3>{plan.name}</h3>
-        <span>monthly proposal</span>
+        <span>monthly</span>
       </div>
       <div className="plan-price"><strong>{plan.price}</strong><span>USD / month</span></div>
       <p><b>{plan.credits}</b> monthly coloring credits</p>
@@ -218,14 +226,44 @@ function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
       <ul>
         <li><Check size={15} /> Shared credit definition</li>
         <li><Check size={15} /> Failure releases reservation</li>
-        <li><Check size={15} /> No default rollover</li>
+        <li><Check size={15} /> Entitlement requires a verified webhook</li>
       </ul>
-      <button disabled>Purchase closed</button>
+      {plan.id ? (
+        <button
+          className={plan.featured ? 'plan-cta primary' : 'plan-cta'}
+          disabled={busyPlan !== null}
+          onClick={() => onChoose(plan.id!)}
+        >
+          {busyPlan === plan.id ? 'Opening secure checkout…' : `Choose ${plan.name}`}
+        </button>
+      ) : <Link className="plan-cta" href="/login">Start free</Link>}
     </article>
   )
 }
 
 export default function Home() {
+  const [busyPlan, setBusyPlan] = useState<string | null>(null)
+  const [checkoutError, setCheckoutError] = useState('')
+
+  async function beginCheckout(planId: string) {
+    setBusyPlan(planId)
+    setCheckoutError('')
+    try {
+      const response = await secureCheckout(planId)
+      const result = await response.json() as { data?: { checkout_url?: string }; checkout_url?: string; error?: { message?: string } }
+      if (response.status === 401) {
+        window.location.assign(`/api/auth/google/start?returnTo=${encodeURIComponent(`/?plan=${planId}#pricing`)}`)
+        return
+      }
+      const checkoutUrl = result.data?.checkout_url || result.checkout_url
+      if (!response.ok || !checkoutUrl) throw new Error(result.error?.message || 'Checkout is temporarily unavailable.')
+      window.location.assign(checkoutUrl)
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Checkout is temporarily unavailable.')
+      setBusyPlan(null)
+    }
+  }
+
   return (
     <ProductLayout>
       <section className="hero-panel">
@@ -237,7 +275,7 @@ export default function Home() {
           </p>
           <div className="hero-actions">
             <Link href="/photo-to-coloring-page" className="primary-button">Start with a photo <ArrowRight size={18} /></Link>
-            <Link href="/account/credits" className="secondary-button">See how credits work</Link>
+            <Link href="/account" className="secondary-button">See how credits work</Link>
           </div>
           <div className="hero-assurance">
             <span><Fingerprint size={15} /> Google sign-in for account only</span>
@@ -314,16 +352,17 @@ export default function Home() {
 
       <section className="panel-section pricing-section" id="pricing">
         <SectionHeading
-          eyebrow="Pricing preview · hold state"
+          eyebrow="Pricing · Waffo Test checkout"
           title="Four monthly tiers, Standard as the single recommendation."
-          text="Amounts and credits follow the V5 proposal. Purchase controls stay disabled until cost, policy, QA, Creem configuration, and owner approval pass."
+          text="Choose a paid plan to open secure Waffo checkout. Sign-in is required before a checkout can be created."
         />
         <div className="pricing-grid">
-          {plans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
+          {plans.map((plan) => <PricingCard key={plan.name} plan={plan} busyPlan={busyPlan} onChoose={beginCheckout} />)}
         </div>
+        {checkoutError ? <p className="prototype-alert"><CircleAlert size={16} /> {checkoutError}</p> : null}
         <div className="pricing-note">
           <CreditCard size={18} />
-          Paid tiers are monthly auto-renewal proposals. Taxes, total price, next charge date, cancellation, refunds, regions, and payment methods must match approved production configuration before any checkout CTA appears.
+          Paid tiers renew monthly. Credits are activated only after a verified Waffo webhook confirms payment.
         </div>
       </section>
 

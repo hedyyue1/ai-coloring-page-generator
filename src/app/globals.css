@@ -182,7 +182,7 @@ button {
   top: 0;
   z-index: 40;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 18px;
   align-items: center;
   min-height: 72px;
@@ -217,6 +217,66 @@ button {
   display: flex;
   gap: 9px;
   align-items: center;
+}
+
+.account-menu {
+  position: relative;
+}
+
+.account-name-button {
+  display: block;
+  max-width: min(480px, calc(100vw - 32px));
+  min-height: 40px;
+  padding: 10px 16px;
+  overflow-wrap: anywhere;
+  border: 0;
+  border-radius: 20px;
+  background: var(--gradient);
+  color: white;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(196, 55, 164, 0.22);
+}
+
+.account-name-button:focus-visible {
+  outline: 3px solid rgba(196, 55, 164, 0.25);
+  outline-offset: 3px;
+}
+
+.account-menu-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 9px);
+  right: 0;
+  min-width: 130px;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 16px 36px rgba(27, 39, 78, 0.15);
+}
+
+.account-menu-popover [role="menuitem"] {
+  display: block;
+  text-decoration: none;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.account-menu-popover [role="menuitem"]:hover,
+.account-menu-popover [role="menuitem"]:focus-visible {
+  background: #fff0f7;
+  color: var(--pink);
 }
 
 .icon-button {
@@ -937,17 +997,41 @@ button {
   color: var(--green);
 }
 
-.price-card button {
+.price-card .plan-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   min-height: 44px;
   margin-top: auto;
-  border: 1px dashed var(--border-strong);
+  padding: 0 16px;
+  color: var(--ink);
+  border: 1px solid var(--border-strong);
   border-radius: 13px;
   background: var(--surface-soft);
-  color: var(--muted-light);
-  cursor: not-allowed;
+  cursor: pointer;
   font-size: 0.8rem;
   font-weight: 900;
+  text-decoration: none;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.price-card .plan-cta:hover:not(:disabled) {
+  border-color: var(--purple);
+  transform: translateY(-1px);
+}
+
+.price-card.featured .plan-cta,
+.price-card.featured .plan-cta.primary {
+  color: white;
+  border-color: transparent;
+  background: var(--gradient);
+  box-shadow: 0 12px 24px rgba(132, 69, 224, 0.24);
+}
+
+.price-card .plan-cta:disabled {
+  cursor: wait;
+  opacity: 0.62;
 }
 
 .pricing-note {
@@ -1376,7 +1460,7 @@ button {
 
 .sidebar-policies a {
   padding: 8px 9px;
-  color: var(--muted);
+  color: var(--ink);
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-soft);
@@ -1386,7 +1470,7 @@ button {
 }
 
 .sidebar-policies a:hover {
-  color: var(--pink);
+  color: #b52665;
   border-color: #efbad5;
   background: var(--pink-soft);
 }
@@ -1477,6 +1561,7 @@ button {
 }
 
 .tool-form-card,
+.generation-result,
 .mini-ledger-card,
 .comparison-table-card,
 .login-card,
@@ -1665,6 +1750,32 @@ button {
   gap: 16px;
 }
 
+.generation-result {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.generation-result > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 900;
+}
+
+.generation-result img {
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.generation-result .primary-button {
+  justify-content: center;
+}
+
 .mini-ledger-card {
   overflow: hidden;
 }
@@ -1807,8 +1918,8 @@ button {
 
 .login-layout {
   display: grid;
-  grid-template-columns: 1fr 430px;
-  gap: clamp(28px, 5vw, 70px);
+  grid-template-columns: minmax(0, 430px);
+  justify-content: center;
   align-items: center;
   padding: clamp(46px, 6vw, 78px) 0;
 }
@@ -1939,8 +2050,49 @@ button {
 
 .account-summary-grid {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+}
+
+.account-detail-section {
+  margin-top: 32px;
+  min-width: 0;
+}
+
+.account-detail-section > h2 {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto 16px;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.35rem;
+}
+
+.account-detail-section:last-child {
+  padding-bottom: 40px;
+}
+
+.account-detail-section > .ledger-table-card {
+  margin-top: 18px;
+}
+
+.account-detail-section > .current-plan-card,
+.account-detail-section > .deletion-request-card {
+  width: min(1180px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.account-detail-section .current-plan-card h3 {
+  margin: 0;
+  font-family: 'Sora', sans-serif;
+  font-size: 1.15rem;
+}
+
+.account-identity-card > div:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-identity-card .avatar-mark {
+  flex-shrink: 0;
 }
 
 .account-identity-card,
@@ -2327,7 +2479,7 @@ button {
 }
 
 .policy-grid article > span {
-  color: var(--pink);
+  color: #b52665;
   font-family: 'Sora', sans-serif;
   font-weight: 900;
 }
@@ -2341,6 +2493,20 @@ button {
 .policy-grid p {
   color: var(--muted);
   line-height: 1.68;
+}
+
+.policy-grid article,
+.support-intake-card > *,
+.support-intake-card label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.policy-grid a,
+.support-intake-card a,
+.subpage-header a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .support-intake-card {
@@ -2383,20 +2549,42 @@ button {
 .support-intake-card textarea {
   width: 100%;
   padding: 12px;
-  color: var(--muted-light);
+  color: var(--ink);
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-soft);
+}
+
+.support-intake-card textarea {
+  resize: vertical;
+}
+
+.support-intake-card :is(input, select, textarea, button):focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.support-intake-card .support-field-error {
+  color: #a51c30;
+}
+
+.support-intake-card .support-success {
+  color: #126644;
 }
 
 .support-intake-card button {
   min-height: 46px;
   border: 0;
   border-radius: 13px;
-  background: #d7dce8;
-  color: #8790a6;
-  cursor: not-allowed;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
   font-weight: 900;
+}
+
+.support-intake-card button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .not-found-page {
@@ -2423,7 +2611,6 @@ button {
 
 @media (max-width: 1100px) {
   .tool-workspace-grid,
-  .login-layout,
   .subscription-panel,
   .deletion-layout,
   .support-intake-card {
@@ -2482,6 +2669,12 @@ button {
 @media (max-width: 640px) {
   .state-link {
     display: none;
+  }
+
+  .account-detail-section > h2,
+  .account-detail-section > .current-plan-card,
+  .account-detail-section > .deletion-request-card {
+    width: min(100% - 28px, 1180px);
   }
 
   .subpage-header,
