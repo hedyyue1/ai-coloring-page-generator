@@ -1374,7 +1374,7 @@ button {
   }
 
   .pricing-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .price-card {
@@ -1383,7 +1383,15 @@ button {
 
   .plan-heading {
     min-height: auto;
+    padding-right: 0;
+  }
+
+  .featured .plan-heading {
     padding-right: 118px;
+  }
+
+  .featured .plan-heading span {
+    display: none;
   }
 
   .popular-badge {
