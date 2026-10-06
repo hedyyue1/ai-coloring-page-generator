@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Garden cottage color and line-art illustration</title>
+  <desc id="desc">An original split illustration showing a colorful cottage garden beside a clean black-and-white outline.</desc>
+  <defs><clipPath id="left"><rect width="400" height="560"/></clipPath></defs>
+  <rect width="800" height="560" fill="#fffaf7"/>
+  <g stroke="#20243b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M54 456Q150 412 246 450T436 444T746 452" fill="none"/>
+    <path d="M155 274v172h300V274L305 164z" fill="#fff"/>
+    <path d="M276 446V338h74v108M190 319h58v63h-58zM380 319h45v63h-45z" fill="none"/>
+    <path d="M121 282l184-145 184 145M469 208v-78h55v120" fill="none"/>
+    <path d="M530 443c-8-75 29-124 93-141M532 400c49 3 81 27 99 69M606 322c-27 11-40 35-37 72M638 366c34 14 50 40 48 78" fill="none"/>
+    <circle cx="621" cy="292" r="27" fill="#fff"/><circle cx="685" cy="349" r="24" fill="#fff"/>
+    <path d="M89 442c5-54 34-89 80-102M83 395c34 4 56 22 70 51" fill="none"/>
+  </g>
+  <g clip-path="url(#left)">
+    <rect width="400" height="560" fill="#dff4ff"/>
+    <circle cx="102" cy="92" r="42" fill="#ffd96a"/>
+    <path d="M54 456Q150 412 246 450T436 444" fill="#88c96a" stroke="#20243b" stroke-width="7"/>
+    <path d="M155 274v172h300V274L305 164z" fill="#ffe8ce" stroke="#20243b" stroke-width="7"/>
+    <path d="M121 282l184-145 184 145" fill="#e76e7b" stroke="#20243b" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M276 446V338h74v108" fill="#8b5b45" stroke="#20243b" stroke-width="7"/>
+    <path d="M190 319h58v63h-58zM380 319h45v63h-45z" fill="#9ed9ff" stroke="#20243b" stroke-width="7"/>
+    <path d="M89 442c5-54 34-89 80-102M83 395c34 4 56 22 70 51" fill="none" stroke="#357a55" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="122" cy="382" r="22" fill="#f59ac1" stroke="#20243b" stroke-width="6"/>
+  </g>
+  <path d="M400 20v520" stroke="#ec3f8c" stroke-width="6" stroke-dasharray="9 11"/>
+  <circle cx="400" cy="280" r="30" fill="#fff" stroke="#ec3f8c" stroke-width="6"/><path d="M389 280h22M400 269v22" stroke="#ec3f8c" stroke-width="5" stroke-linecap="round"/>
+</svg>

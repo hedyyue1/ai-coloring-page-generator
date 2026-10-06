@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Cozy cat color and line-art illustration</title>
+  <desc id="desc">An original split illustration of a cat on a cushion, colorful on one side and outlined on the other.</desc>
+  <defs><clipPath id="left"><rect width="400" height="560"/></clipPath></defs>
+  <rect width="800" height="560" fill="#fffdf9"/>
+  <g fill="#fff" stroke="#20243b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M167 381q-18-115 45-180l-8-74 70 44q48-16 96 0l70-44-8 76q60 71 39 178z"/>
+    <path d="M200 381q100-41 200 0l62 81H136z"/>
+    <path d="M260 246q25 24 50 0M365 246q25 24 50 0" fill="none"/>
+    <path d="M319 281l17 12 17-12M336 293v27M336 320q-20 17-38 0M336 320q20 17 38 0" fill="none"/>
+    <path d="M221 294l-92-19M219 316l-97 5M451 294l92-19M453 316l97 5" fill="none"/>
+    <path d="M119 463q-17-56 33-84M531 463q17-56-33-84" fill="none"/>
+    <circle cx="112" cy="380" r="29"/><circle cx="559" cy="380" r="29"/>
+  </g>
+  <g clip-path="url(#left)">
+    <rect width="400" height="560" fill="#f3eaff"/>
+    <circle cx="95" cy="92" r="42" fill="#ffd96a"/>
+    <path d="M167 381q-18-115 45-180l-8-74 70 44q48-16 96 0l70-44-8 76q60 71 39 178z" fill="#f2b56b" stroke="#20243b" stroke-width="7"/>
+    <path d="M200 381q100-41 200 0l62 81H136z" fill="#ed78aa" stroke="#20243b" stroke-width="7"/>
+    <circle cx="284" cy="250" r="9" fill="#314a45"/><circle cx="388" cy="250" r="9" fill="#314a45"/>
+    <path d="M319 281l17 12 17-12" fill="#f28086" stroke="#20243b" stroke-width="6"/>
+    <circle cx="112" cy="380" r="29" fill="#7ed6bb" stroke="#20243b" stroke-width="7"/>
+  </g>
+  <path d="M400 20v520" stroke="#ec3f8c" stroke-width="6" stroke-dasharray="9 11"/>
+  <circle cx="400" cy="280" r="30" fill="#fff" stroke="#ec3f8c" stroke-width="6"/><path d="M389 280h22M400 269v22" stroke="#ec3f8c" stroke-width="5" stroke-linecap="round"/>
+</svg>

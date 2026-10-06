@@ -1,16 +1,18 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowRight,
   BadgeCheck,
   Check,
   ChevronDown,
+
   CreditCard,
   FileText,
   Fingerprint,
-  ScanLine,
+
   ShieldCheck,
   Type,
   UploadCloud,
@@ -20,133 +22,126 @@ import {
 import ProductLayout from '../components/ProductLayout'
 import ComparisonCard from '../components/ComparisonCard'
 
-type WorkflowStep = {
-  id: string
-  label: string
-  title: string
-  status: string
-  body: string
-  ledger: Array<[string, string]>
-}
-
-const workflowSteps: WorkflowStep[] = [
+const workflowSteps = [
   {
     id: 'input',
-    label: 'Choose your input',
-    title: 'Start with a photo or an original idea.',
-    status: 'Ready to review',
-    body: 'Choose a photo you are allowed to use or write an original idea, then confirm that it does not contain private student information or restricted content.',
-    ledger: [
-      ['Usage rights', 'confirmed'],
-      ['Content check', 'passed'],
-      ['Credits used', 'none'],
-    ],
+    label: 'Choose your photo',
+    title: 'Choose a photo you own or have permission to use.',
+    body: 'Confirm that you are an adult and have permission to use the photo. Do not use student information, sensitive material, protected characters or public figures.',
+    visual: '/workflow/choose-photo.svg',
+    visualAlt: 'Illustration of an adult selecting a permitted photo for a coloring-page preview',
   },
   {
     id: 'identity',
-    label: 'Sign in',
-    title: 'Keep your credits connected to one account.',
-    status: 'Account secured',
-    body: 'Google sign-in identifies your Linea account. Linea does not request access to your photos, files, email, or contacts.',
-    ledger: [
-      ['Account', 'connected'],
-      ['Monthly credits', '20'],
-      ['Requested details', 'name and email'],
-    ],
+    label: 'Google sign-in',
+    title: 'Sign in to view your account',
+    body: 'Google sign-in identifies your account. It does not verify your age or permission to use a photo.',
+    visual: '/workflow/google-sign-in.svg',
+    visualAlt: 'Illustration of the Google sign-in step used to access an account',
   },
   {
-    id: 'reserve',
-    label: 'Hold 1 credit',
-    title: 'Your credit stays protected while the page is created.',
-    status: 'Credit held',
-    body: 'Photo and text tools share one balance. One credit is held while Linea creates your page, so it can be returned automatically if the request fails.',
-    ledger: [
-      ['Credit held', '1'],
-      ['Page type', 'standard'],
-      ['Available balance', '19'],
-    ],
+    id: 'preview',
+    label: 'Create your preview',
+    title: 'Create your preview',
+    body: 'The current photo preview is created in your browser and does not deduct credits. A generated PNG copy is sent to our server for download and may contain recognizable details.',
+    visual: '/workflow/create-preview.svg',
+    visualAlt: 'Illustration of a photo being converted into a coloring-page preview',
   },
   {
-    id: 'settle',
-    label: 'Receive your page',
-    title: 'Use one credit only after a page is completed.',
-    status: 'Request complete',
-    body: 'A completed coloring page uses one credit. If the request is rejected, times out, or fails, the held credit returns to your balance.',
-    ledger: [
-      ['Page completed', 'use 1 credit'],
-      ['Request failed', 'return 1 credit'],
-      ['Balance', 'updated'],
-    ],
+    id: 'result',
+    label: 'Check your result',
+    title: 'Check your result and download access',
+    body: 'Review the result before printing. PNG downloads require Google sign-in and an eligible subscription. New purchases are unavailable. Download access expires after 24 hours; this does not mean every stored copy has been deleted.',
+    visual: '/workflow/check-result.svg',
+    visualAlt: 'Illustration of reviewing and downloading a completed coloring-page result',
   },
 ]
 
 const toolCards = [
   {
     icon: UploadCloud,
-    eyebrow: 'Photo workflow',
-    title: 'Image to Coloring Page',
-    text: 'Upload an adult-owned photo, confirm usage rights, preview the reservation, then generate one standard page.',
-    meta: '1 credit on success',
+    eyebrow: 'Photo preview',
+    title: 'Photo to Coloring Page',
+    text: 'Choose a photo you have permission to use and create a browser-based preview. A generated copy is sent to our server for download.',
+    meta: 'Creating the current photo preview does not use credits.',
     href: '/photo-to-coloring-page',
   },
   {
     icon: Type,
-    eyebrow: 'Original text',
+    eyebrow: 'Text themes',
     title: 'Text to Coloring Page',
-    text: 'Write an original family, classroom, seasonal, or activity theme without uploading student PII.',
-    meta: 'Shared credit balance',
+    text: 'Text-to-coloring generation is currently unavailable. Do not enter student information or sensitive details.',
+    meta: 'Text generation unavailable',
     href: '/text-to-coloring-page',
   },
   {
     icon: WalletCards,
-    eyebrow: 'Plans and credits',
-    title: 'Simple Monthly Credits',
-    text: 'Compare plans and see how credits are held, used, or returned for every request.',
-    meta: 'Clear credit rules',
-    href: '/pricing',
+    eyebrow: 'Your account',
+    title: 'Your credits',
+    text: 'View your available balance and recent credit activity. For billing or balance questions, contact Support.',
+    meta: 'Recent credit activity',
+    href: '/account',
+  },
+]
+
+const exampleCards = [
+  {
+    src: '/examples/garden-cottage.svg',
+    title: 'Garden cottage',
+    alt: 'Original split illustration of a colorful garden cottage beside a black-and-white line-art version',
+  },
+  {
+    src: '/examples/cozy-cat.svg',
+    title: 'Cozy cat',
+    alt: 'Original split illustration of a colorful cat on a cushion beside a black-and-white line-art version',
+  },
+  {
+    src: '/examples/camping-memory.svg',
+    title: 'Camping memory',
+    alt: 'Original split illustration of a colorful mountain campsite beside a black-and-white line-art version',
   },
 ]
 
 const plans = [
-  { name: 'Free', price: '$0', credits: '20', fit: 'Controlled first experience after Google sign-in' },
-  { name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation' },
-  { name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
-  { name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers' },
+  { id: null, name: 'Free', price: '$0', credits: '20', fit: 'For getting started with Google sign-in', featured: false },
+  { id: 'starter_monthly', name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation', featured: false },
+  { id: 'standard_monthly', name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
+  { id: 'premium_monthly', name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers', featured: false },
 ]
 
 const states = [
-  ['Sign-in cancelled', 'Return safely and try again when you are ready.'],
-  ['Payment pending', 'Your plan updates after payment is confirmed.'],
-  ['Renewal issue', 'Your account shows what needs attention.'],
-  ['Cancellation scheduled', 'Your access continues through the date shown.'],
-  ['Refund pending', 'Your account updates after the refund is confirmed.'],
-  ['Payment disputed', 'Your plan and credits remain visible during review.'],
+  ['Sign-in not completed', 'You can return and try signing in again.'],
+  ['Payment confirmation pending', 'Check your account before attempting another payment.'],
+  ['Renewal not confirmed', 'Contact Support if your access or balance is not what you expected.'],
+  ['Cancellation requested', 'Ask Support to confirm whether cancellation is complete and when it takes effect.'],
+  ['Refund review requested', 'A request does not mean a refund has been approved or paid.'],
+  ['Payment dispute', 'Contact Support for information about your account.'],
 ]
 
 const faqs = [
   [
-    'Why does this product require sign-in?',
-    'Monthly credits belong to an account. Sign-in makes balance, reservation, release, renewal, cancellation, refund, and dispute states explainable. It is not presented as endorsement, age verification, or proof of image rights.',
+    'Why sign in with Google?',
+    'Google sign-in lets you view your account and request an eligible download. It does not verify your age or your rights to a photo.',
   ],
   [
-    'What does one credit create?',
-    'One credit represents one successfully delivered standard coloring activity page from an authorized photo or original text. Text and image jobs share one balance; failed jobs release the reservation.',
+    'What is a coloring credit?',
+    'The monthly plans use credits for coloring pages. The current browser-based photo preview does not deduct credits; text generation is unavailable.',
   ],
   [
-    'Is Free unlimited or available without an account?',
-    'No. The Free plan includes 20 monthly credits connected to your account.',
+    'What does the Free plan include?',
+    'The Free plan allowance is 20 credits per month and requires Google sign-in. Current photo previews do not deduct credits. Free does not mean unlimited use or permanent storage.',
   ],
   [
-    'When does a payment activate a plan?',
-    'Your plan activates after the payment is confirmed. The checkout return page may briefly show that confirmation is still pending.',
+    'How do I check payment and subscription access?',
+    'Returning from checkout is not payment confirmation. Check Account for your subscription status and contact Support if access is missing. Do not pay again to fix a missing status.',
   ],
   [
     'Can teachers upload student materials?',
     'No student accounts, rosters, names, photos, grades, or sensitive school records. Adults may prepare general original themes for classroom use.',
   ],
   [
-    'Are download format, watermark, and retention decided?',
-    'Not yet. They remain validation items, so the interface avoids promising unlimited downloads, no watermark, 4K, privacy, or commercial rights.',
+    'What should I know about downloads and storage?',
+    'A generated PNG copy is sent to our server for download. Download access expires after 24 hours; this does not mean every stored copy has been deleted. Downloads require Google sign-in and an eligible subscription.',
   ],
 ]
 
@@ -169,13 +164,16 @@ function WorkflowPanel() {
 
   return (
     <div className="workflow-console">
-      <div className="workflow-tabs" role="tablist" aria-label="How Linea works">
+      <div className="workflow-tabs" role="tablist" aria-label="Photo preview steps">
         {workflowSteps.map((step, index) => (
           <button
             key={step.id}
+            id={`workflow-tab-${step.id}`}
             className={step.id === active.id ? 'workflow-tab active' : 'workflow-tab'}
             onClick={() => setActiveId(step.id)}
+            type="button"
             role="tab"
+            aria-controls={`workflow-panel-${step.id}`}
             aria-selected={step.id === active.id}
           >
             <span>{index + 1}</span>
@@ -183,18 +181,25 @@ function WorkflowPanel() {
           </button>
         ))}
       </div>
-      <article className="workflow-detail">
-        <div>
-          <p className="detail-status">{active.status}</p>
+      <article
+        className="workflow-detail"
+        id={`workflow-panel-${active.id}`}
+        role="tabpanel"
+        aria-labelledby={`workflow-tab-${active.id}`}
+      >
+        <div className="workflow-copy">
           <h3>{active.title}</h3>
           <p>{active.body}</p>
         </div>
-        <div className="ledger-card">
-          <div><ScanLine size={17} /> What happens</div>
-          {active.ledger.map(([event, value]) => (
-            <p key={event}><code>{event}</code><span>{value}</span></p>
-          ))}
-        </div>
+        <figure className="workflow-visual" key={active.id}>
+          <Image
+            src={active.visual}
+            alt={active.visualAlt}
+            width={720}
+            height={420}
+            sizes="(max-width: 900px) 100vw, 46vw"
+          />
+        </figure>
       </article>
     </div>
   )
@@ -203,41 +208,45 @@ function WorkflowPanel() {
 function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
   return (
     <article className={plan.featured ? 'price-card featured' : 'price-card'}>
-      {plan.featured ? <span className="popular-badge">Popular · only one</span> : null}
+      {plan.featured ? <span className="popular-badge">Recommended</span> : null}
       <div className="plan-heading">
         <h3>{plan.name}</h3>
-        <span>monthly plan</span>
+        <span>monthly</span>
       </div>
       <div className="plan-price"><strong>{plan.price}</strong><span>USD / month</span></div>
       <p><b>{plan.credits}</b> monthly coloring credits</p>
       <p className="plan-fit">{plan.fit}</p>
       <ul>
-        <li><Check size={15} /> One balance for both tools</li>
-        <li><Check size={15} /> Failed requests return the credit</li>
-        <li><Check size={15} /> Credits refresh monthly</li>
+        <li><Check size={15} /> View your credits in Account</li>
+        <li><Check size={15} /> Current photo previews do not deduct credits.</li>
+        <li><Check size={15} /> Check your account for confirmed access.</li>
       </ul>
-      <button disabled>Subscribe</button>
+      {plan.id ? (
+        <button className={plan.featured ? 'plan-cta primary' : 'plan-cta'} disabled>New purchases unavailable</button>
+      ) : <Link className="plan-cta" href="/photo-to-coloring-page">Create a photo preview</Link>}
     </article>
   )
 }
 
 export default function Home() {
+
+
   return (
     <ProductLayout>
       <section className="hero-panel">
         <div className="hero-copy">
-          <p className="hero-kicker">AI Coloring Page Generator · adult-focused</p>
-          <h1>Turn an <span>authorized photo</span> or original idea into one coloring activity page.</h1>
+          <p className="hero-kicker">Photo to Coloring Page · for adults</p>
+          <h1>Turn a <span>photo you have permission to use</span> into a coloring-page preview.</h1>
           <p className="hero-subtitle">
-            A guided workflow with clear monthly credits and account status before they apply.
+            Create a photo preview. Downloads require Google sign-in and an eligible subscription; new purchases are currently unavailable.
           </p>
           <div className="hero-actions">
             <Link href="/photo-to-coloring-page" className="primary-button">Start with a photo <ArrowRight size={18} /></Link>
-            <Link href="/pricing" className="secondary-button">See how credits work</Link>
+            <Link href="/account" className="secondary-button">See how credits work</Link>
           </div>
           <div className="hero-assurance">
-            <span><Fingerprint size={15} /> Google sign-in for account only</span>
-            <span><ShieldCheck size={15} /> Rights confirmation before upload</span>
+            <span><Fingerprint size={15} /> Use Google to access your account</span>
+            <span><ShieldCheck size={15} /> Use only photos you own or have permission to use.</span>
           </div>
         </div>
         <ComparisonCard />
@@ -261,77 +270,102 @@ export default function Home() {
       <section className="panel-section" id="workflow">
         <SectionHeading
           eyebrow="How it works"
-          title="A clear four-step path from idea to coloring page."
-          text="See when your input is checked, when a credit is held, and when it is returned or used."
+          title="How to create a photo preview"
+          text="Choose a permitted photo, confirm your rights and create a preview. Check download requirements before continuing."
         />
         <WorkflowPanel />
       </section>
 
+      <section className="panel-section examples-section" id="examples">
+        <SectionHeading
+          eyebrow="Illustrative examples"
+          title="See the idea before you use your own photo"
+          text="These are original illustrations showing the kind of before-and-line-art comparison you can expect. They are examples, not generated customer results."
+        />
+        <div className="example-grid">
+          {exampleCards.map((example) => (
+            <figure className="example-card" key={example.title}>
+              <Image
+                src={example.src}
+                alt={example.alt}
+                width={800}
+                height={560}
+                sizes="(max-width: 900px) 100vw, 33vw"
+              />
+              <figcaption>
+                <strong>{example.title}</strong>
+                <span>Color reference → printable line-art concept</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+        <div className="examples-cta">
+          <p>Ready to try a photo you own or have permission to use?</p>
+          <Link href="/photo-to-coloring-page" className="primary-button">Create a photo preview <ArrowRight size={18} /></Link>
+        </div>
+      </section>
+
       <section className="credit-panel" id="credits">
         <div className="credit-copy">
-          <p className="hero-kicker">One simple credit rule</p>
-          <h2>One successful standard page consumes one credit. Failure releases it.</h2>
+          <p className="hero-kicker">Photo previews and credits</p>
+          <h2>Current photo previews do not deduct credits.</h2>
           <p>
-            Photo and text requests share one balance. A failed request returns the held credit automatically, so your balance stays easy to understand.
+            View your current balance in Account. Returning from checkout does not confirm a payment.
           </p>
         </div>
-        <div className="credit-events">
-          <span>grant</span><ArrowRight size={15} />
-          <span>reserve</span><ArrowRight size={15} />
-          <span>consume</span><ArrowRight size={15} />
-          <span>release</span><ArrowRight size={15} />
-          <span>expire</span>
-        </div>
+
       </section>
 
       <section className="panel-section boundary-section">
         <SectionHeading
-          eyebrow="Input boundary"
+          eyebrow="Choose suitable content"
           title="Designed for adults preparing one meaningful page."
         />
         <div className="boundary-grid">
           <article>
             <ShieldCheck size={23} />
-            <h3>Allowed with confirmation</h3>
-            <p>Adult-owned family photos, original written themes, general classroom topics, and non-sensitive activity ideas.</p>
+            <h3>Photos you can use</h3>
+            <p>Photos you have permission to use, without student information or sensitive details. Text generation is currently unavailable.</p>
           </article>
           <article>
             <X size={23} />
-            <h3>Not allowed</h3>
-            <p>Student PII, unauthorized images, protected characters, public figures, sensitive data, batch books, teams, or commercial promises.</p>
+            <h3>What not to submit</h3>
+            <p>Do not use student information, sensitive details, unauthorized images, protected characters or public figures. This service does not include batch creation, team accounts or commercial publishing permission.</p>
           </article>
           <article>
             <BadgeCheck size={23} />
-            <h3>Verified before claimed</h3>
-            <p>Format, retention, downloads, watermark, fairness limits, cancellation, refund, and regional payment details wait for approved evidence.</p>
+            <h3>Know what is included</h3>
+            <p>Current photo results are PNG previews. Downloads require Google sign-in and an eligible subscription. For cancellation, refund or privacy requests, visit Support.</p>
           </article>
         </div>
       </section>
 
       <section className="panel-section pricing-section" id="pricing">
         <SectionHeading
-          eyebrow="Pricing"
-          title="Four monthly tiers, Standard as the single recommendation."
-          text="Compare four simple monthly plans. Paid subscriptions are coming soon."
+          eyebrow="Monthly plans — new purchases unavailable"
+          title="Compare monthly plans"
+          text="New purchases are currently unavailable. You can compare monthly plans below; no purchase can be made here."
         />
         <div className="pricing-grid">
           {plans.map((plan) => <PricingCard key={plan.name} plan={plan} />)}
         </div>
+
         <div className="pricing-note">
           <CreditCard size={18} />
-          Paid tiers renew monthly. Final checkout details, cancellation options, and refund information will be shown before purchase.
+          These paid plans are monthly subscriptions. New purchases are unavailable. Before any purchase becomes available, review renewal, cancellation and total-price details.
         </div>
       </section>
 
       <section className="panel-section states-section">
         <SectionHeading
-          eyebrow="Account states"
-          title="Edge cases get their own visible interface."
+          eyebrow="Account and payment help"
+          title="Need help with your account?"
+          text="These are help topics, not your current account status. Visit Account for your details or contact Support."
         />
         <div className="state-grid">
           {states.map(([state, text]) => (
             <article key={state}>
-              <code>{state}</code>
+              <h3>{state}</h3>
               <p>{text}</p>
             </article>
           ))}
@@ -341,7 +375,7 @@ export default function Home() {
       <section className="panel-section faq-section" id="faq">
         <SectionHeading
           eyebrow="FAQ"
-          title="Clear answers before someone trusts the workflow."
+          title="Questions about previews, downloads and your account"
         />
         <div className="faq-list">
           {faqs.map(([question, answer], index) => (
@@ -359,15 +393,15 @@ export default function Home() {
 
       <section className="final-cta">
         <div>
-          <p>Ready to create?</p>
-          <h2>Start with a photo you are allowed to use or an original idea.</h2>
+          <p>Create a photo preview</p>
+          <h2>Start with a photo you have permission to use.</h2>
         </div>
-        <Link href="/photo-to-coloring-page">Open photo workflow <ArrowRight size={18} /></Link>
+        <Link href="/photo-to-coloring-page">Try the photo preview <ArrowRight size={18} /></Link>
       </section>
 
       <footer className="footer-bar">
-        <span>Linea · AI coloring pages for adults, families, and educators</span>
-        <span><FileText size={14} /> Privacy, terms, and support</span>
+        <span>Linea · coloring activities for adults</span>
+        <span><FileText size={14} /> <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/acceptable-use">Acceptable Use</Link> · <Link href="/refunds">Refunds and cancellation</Link> · <Link href="/support">Support</Link> · <Link href="/account">Account and data requests</Link></span>
       </footer>
     </ProductLayout>
   )

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" role="img" aria-labelledby="title desc">
+  <title id="title">Camping memory color and line-art illustration</title>
+  <desc id="desc">An original split illustration of a mountain campsite shown in color and in clean black outlines.</desc>
+  <defs><clipPath id="left"><rect width="400" height="560"/></clipPath></defs>
+  <rect width="800" height="560" fill="#fff"/>
+  <g fill="#fff" stroke="#20243b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="637" cy="102" r="45"/>
+    <path d="M48 348l153-177 95 109 70-79 135 157 104-116 151 176"/>
+    <path d="M83 447h636M241 446l106-167 105 167zM347 279v167"/>
+    <path d="M542 447v-151M542 296l-61 81h122zM542 334l-82 97h164z"/>
+    <path d="M142 447v-112M142 335l-48 64h96zM142 368l-66 79h132z"/>
+    <path d="M494 465q42-42 84 0M511 447l-23-29M561 447l23-29" fill="none"/>
+  </g>
+  <g clip-path="url(#left)">
+    <rect width="400" height="560" fill="#dff4ff"/>
+    <circle cx="112" cy="102" r="45" fill="#ffd96a" stroke="#20243b" stroke-width="7"/>
+    <path d="M48 348l153-177 95 109 70-79 135 157 104-116 151 176" fill="#8ca8d9" stroke="#20243b" stroke-width="7"/>
+    <path d="M48 348l153-177 39 45-28 34-30-22-39 45" fill="#fff" stroke="#20243b" stroke-width="6"/>
+    <path d="M83 447h636v113H83z" fill="#85c66b" stroke="#20243b" stroke-width="7"/>
+    <path d="M241 446l106-167 105 167z" fill="#f08d68" stroke="#20243b" stroke-width="7"/>
+    <path d="M347 279v167" stroke="#20243b" stroke-width="7"/>
+    <path d="M142 447v-112M142 335l-48 64h96zM142 368l-66 79h132z" fill="#3c8b68" stroke="#20243b" stroke-width="7"/>
+  </g>
+  <path d="M400 20v520" stroke="#ec3f8c" stroke-width="6" stroke-dasharray="9 11"/>
+  <circle cx="400" cy="280" r="30" fill="#fff" stroke="#ec3f8c" stroke-width="6"/><path d="M389 280h22M400 269v22" stroke="#ec3f8c" stroke-width="5" stroke-linecap="round"/>
+</svg>
