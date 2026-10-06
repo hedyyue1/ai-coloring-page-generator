@@ -42,3 +42,10 @@ test('pricing section remains on the homepage after the example gallery', async 
   assert.ok(pricingIndex > examplesIndex)
   assert.match(home, /Compare monthly plans/)
 })
+
+test('pricing cards can shrink within a 320px viewport', async () => {
+  const styles = await source('src/app/globals.css')
+
+  assert.match(styles, /@media \(max-width: 640px\)[\s\S]*?\.pricing-grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/)
+  assert.match(styles, /@media \(max-width: 640px\)[\s\S]*?\.price-card\s*\{[\s\S]*?min-width:\s*0/)
+})

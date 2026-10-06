@@ -1382,10 +1382,11 @@ button {
   }
 
   .pricing-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .price-card {
+    min-width: 0;
     min-height: auto;
   }
 
