@@ -1,104 +1,73 @@
 'use client'
 
-import { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowRight,
-  BadgeCheck,
   Check,
   ChevronDown,
-
   CreditCard,
-  FileText,
+  Download,
   Fingerprint,
-
+  Image as ImageIcon,
+  Printer,
   ShieldCheck,
+  Sparkles,
   Type,
   UploadCloud,
-  WalletCards,
-  X,
+  Wand2,
 } from 'lucide-react'
 import ProductLayout from '../components/ProductLayout'
 import ComparisonCard from '../components/ComparisonCard'
 
-const workflowSteps = [
-  {
-    id: 'input',
-    label: 'Choose your photo',
-    title: 'Choose a photo you own or have permission to use.',
-    body: 'Confirm that you are an adult and have permission to use the photo. Do not use student information, sensitive material, protected characters or public figures.',
-    visual: '/workflow/choose-photo.svg',
-    visualAlt: 'Illustration of an adult selecting a permitted photo for a coloring-page preview',
-  },
-  {
-    id: 'identity',
-    label: 'Google sign-in',
-    title: 'Sign in to view your account',
-    body: 'Google sign-in identifies your account. It does not verify your age or permission to use a photo.',
-    visual: '/workflow/google-sign-in.svg',
-    visualAlt: 'Illustration of the Google sign-in step used to access an account',
-  },
-  {
-    id: 'preview',
-    label: 'Create your preview',
-    title: 'Create your preview',
-    body: 'The current photo preview is created in your browser and does not deduct credits. A generated PNG copy is sent to our server for download and may contain recognizable details.',
-    visual: '/workflow/create-preview.svg',
-    visualAlt: 'Illustration of a photo being converted into a coloring-page preview',
-  },
-  {
-    id: 'result',
-    label: 'Check your result',
-    title: 'Check your result and download access',
-    body: 'Review the result before printing. PNG downloads require Google sign-in and an eligible subscription. New purchases are unavailable. Download access expires after 24 hours; this does not mean every stored copy has been deleted.',
-    visual: '/workflow/check-result.svg',
-    visualAlt: 'Illustration of reviewing and downloading a completed coloring-page result',
-  },
+const photoFeatures = [
+  'Clean, well-balanced outlines for every skill level',
+  'Multiple line-art styles to choose from',
+  'Instantly printable high-resolution PNG output',
 ]
 
-const toolCards = [
+const textFeatures = [
+  'Describe any theme in your own words',
+  'Original scenes for family, homeschool, or relaxation',
+  'Same printable quality as the photo tool',
+]
+
+const howItWorks = [
   {
     icon: UploadCloud,
-    eyebrow: 'Photo preview',
-    title: 'Photo to Coloring Page',
-    text: 'Choose a photo you have permission to use and create a browser-based preview. A generated copy is sent to our server for download.',
-    meta: 'Creating the current photo preview does not use credits.',
-    href: '/photo-to-coloring-page',
+    title: 'Upload a photo or write an idea',
+    text: 'Choose a photo you own or have permission to use, or describe an original theme in words.',
   },
   {
-    icon: Type,
-    eyebrow: 'Text themes',
-    title: 'Text to Coloring Page',
-    text: 'Text-to-coloring generation is currently unavailable. Do not enter student information or sensitive details.',
-    meta: 'Text generation unavailable',
-    href: '/text-to-coloring-page',
+    icon: Wand2,
+    title: 'Preview your coloring page',
+    text: 'Create a browser-based preview of your line art. Current photo previews do not deduct credits.',
   },
   {
-    icon: WalletCards,
-    eyebrow: 'Your account',
-    title: 'Your credits',
-    text: 'View your available balance and recent credit activity. For billing or balance questions, contact Support.',
-    meta: 'Recent credit activity',
-    href: '/account',
+    icon: Printer,
+    title: 'Download and print',
+    text: 'PNG downloads require Google sign-in and an eligible subscription. Print at home or in the classroom.',
   },
 ]
 
-const exampleCards = [
+const gallery = [
   {
-    src: '/examples/garden-cottage.svg',
+    src: '/examples/cottage-line.jpg',
+    color: '/examples/cottage-color.jpg',
     title: 'Garden cottage',
-    alt: 'Original split illustration of a colorful garden cottage beside a black-and-white line-art version',
+    alt: 'Line-art coloring page of a cozy garden cottage with flowers and a picket fence',
   },
   {
-    src: '/examples/cozy-cat.svg',
+    src: '/examples/cat-line.jpg',
+    color: '/examples/cat-color.jpg',
     title: 'Cozy cat',
-    alt: 'Original split illustration of a colorful cat on a cushion beside a black-and-white line-art version',
+    alt: 'Line-art coloring page of a cat sleeping on a cushion in a warm room',
   },
   {
-    src: '/examples/camping-memory.svg',
+    src: '/examples/camp-line.jpg',
+    color: '/examples/camp-color.jpg',
     title: 'Camping memory',
-    alt: 'Original split illustration of a colorful mountain campsite beside a black-and-white line-art version',
+    alt: 'Line-art coloring page of a mountain campsite with a tent and campfire at sunset',
   },
 ]
 
@@ -107,15 +76,6 @@ const plans = [
   { id: 'starter_monthly', name: 'Starter', price: '$9.99', credits: '200', fit: 'Occasional family or classroom preparation', featured: false },
   { id: 'standard_monthly', name: 'Standard', price: '$19.99', credits: '500', fit: 'Frequent household, homeschool, or teacher use', featured: true },
   { id: 'premium_monthly', name: 'Premium', price: '$39.99', credits: '1,500', fit: 'High-frequency adult activity organizers', featured: false },
-]
-
-const states = [
-  ['Sign-in not completed', 'You can return and try signing in again.'],
-  ['Payment confirmation pending', 'Check your account before attempting another payment.'],
-  ['Renewal not confirmed', 'Contact Support if your access or balance is not what you expected.'],
-  ['Cancellation requested', 'Ask Support to confirm whether cancellation is complete and when it takes effect.'],
-  ['Refund review requested', 'A request does not mean a refund has been approved or paid.'],
-  ['Payment dispute', 'Contact Support for information about your account.'],
 ]
 
 const faqs = [
@@ -155,56 +115,6 @@ function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: stri
   )
 }
 
-function WorkflowPanel() {
-  const [activeId, setActiveId] = useState(workflowSteps[0].id)
-  const active = useMemo(
-    () => workflowSteps.find((step) => step.id === activeId) ?? workflowSteps[0],
-    [activeId],
-  )
-
-  return (
-    <div className="workflow-console">
-      <div className="workflow-tabs" role="tablist" aria-label="Photo preview steps">
-        {workflowSteps.map((step, index) => (
-          <button
-            key={step.id}
-            id={`workflow-tab-${step.id}`}
-            className={step.id === active.id ? 'workflow-tab active' : 'workflow-tab'}
-            onClick={() => setActiveId(step.id)}
-            type="button"
-            role="tab"
-            aria-controls={`workflow-panel-${step.id}`}
-            aria-selected={step.id === active.id}
-          >
-            <span>{index + 1}</span>
-            {step.label}
-          </button>
-        ))}
-      </div>
-      <article
-        className="workflow-detail"
-        id={`workflow-panel-${active.id}`}
-        role="tabpanel"
-        aria-labelledby={`workflow-tab-${active.id}`}
-      >
-        <div className="workflow-copy">
-          <h3>{active.title}</h3>
-          <p>{active.body}</p>
-        </div>
-        <figure className="workflow-visual" key={active.id}>
-          <Image
-            src={active.visual}
-            alt={active.visualAlt}
-            width={720}
-            height={420}
-            sizes="(max-width: 900px) 100vw, 46vw"
-          />
-        </figure>
-      </article>
-    </div>
-  )
-}
-
 function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
   return (
     <article className={plan.featured ? 'price-card featured' : 'price-card'}>
@@ -229,72 +139,125 @@ function PricingCard({ plan }: { plan: (typeof plans)[number] }) {
 }
 
 export default function Home() {
-
-
   return (
     <ProductLayout>
       <section className="hero-panel">
         <div className="hero-copy">
-          <p className="hero-kicker">Photo to Coloring Page · for adults</p>
-          <h1>Turn a <span>photo you have permission to use</span> into a coloring-page preview.</h1>
+          <p className="hero-kicker"><Sparkles size={14} /> AI coloring page generator</p>
+          <h1>Turn photos and ideas into <span>beautiful line art</span> worth coloring.</h1>
           <p className="hero-subtitle">
-            Create a photo preview. Downloads require Google sign-in and an eligible subscription; new purchases are currently unavailable.
+            Upload a photo you have permission to use — or describe an idea in words — and get a clean,
+            printable coloring page. For adults, families, and everyone who loves to color.
           </p>
           <div className="hero-actions">
             <Link href="/photo-to-coloring-page" className="primary-button">Start with a photo <ArrowRight size={18} /></Link>
-            <Link href="/account" className="secondary-button">See how credits work</Link>
+            <Link href="/text-to-coloring-page" className="secondary-button"><Type size={17} /> Describe an idea</Link>
           </div>
           <div className="hero-assurance">
-            <span><Fingerprint size={15} /> Use Google to access your account</span>
-            <span><ShieldCheck size={15} /> Use only photos you own or have permission to use.</span>
+            <span><Fingerprint size={15} /> Browser-based preview · no credits used</span>
+            <span><ShieldCheck size={15} /> Use only photos you own or may use</span>
           </div>
         </div>
         <ComparisonCard />
       </section>
 
-      <section className="tool-strip" aria-label="Core tools">
-        {toolCards.map((tool) => {
-          const Icon = tool.icon
-          return (
-            <Link className="tool-card" href={tool.href} key={tool.title}>
-              <div className="tool-icon"><Icon size={23} /></div>
-              <span>{tool.eyebrow}</span>
-              <h2>{tool.title}</h2>
-              <p>{tool.text}</p>
-              <strong>{tool.meta}</strong>
-            </Link>
-          )
-        })}
+      <section className="panel-section feature-block" id="photo-tool">
+        <div className="feature-split">
+          <div className="feature-copy">
+            <div className="feature-icon photo"><ImageIcon size={22} /></div>
+            <h2>Photo to Coloring Page</h2>
+            <p>
+              Upload any photo you own or are authorized to use, and preview it as clean line art in your
+              browser. A generated copy is sent to our server for download once you are signed in.
+            </p>
+            <ul>
+              {photoFeatures.map((feature) => <li key={feature}><Check size={16} /> {feature}</li>)}
+            </ul>
+            <Link href="/photo-to-coloring-page" className="primary-button">Try the photo tool <ArrowRight size={17} /></Link>
+          </div>
+          <figure className="feature-pair">
+            <div className="pair-item">
+              <Image src="/examples/cat-color.jpg" alt="Colorful illustration of a cat sleeping on a cushion" width={640} height={427} sizes="(max-width: 900px) 100vw, 23vw" />
+              <span>Photo</span>
+            </div>
+            <ArrowRight className="pair-arrow" size={26} />
+            <div className="pair-item">
+              <Image src="/examples/cat-line.jpg" alt="The same cat illustration converted into printable line art" width={640} height={427} sizes="(max-width: 900px) 100vw, 23vw" />
+              <span>Line art</span>
+            </div>
+          </figure>
+        </div>
       </section>
 
-      <section className="panel-section" id="workflow">
+      <section className="panel-section feature-block" id="text-tool">
+        <div className="feature-split reverse">
+          <div className="feature-copy">
+            <div className="feature-icon text"><Type size={22} /></div>
+            <h2>Text to Coloring Page</h2>
+            <p>
+              Describe an original theme in your own words — a cozy garden, a seaside picnic, a birthday
+              party — and turn it into a one-of-a-kind coloring page. Text generation is currently unavailable.
+            </p>
+            <ul>
+              {textFeatures.map((feature) => <li key={feature}><Check size={16} /> {feature}</li>)}
+            </ul>
+            <Link href="/text-to-coloring-page" className="secondary-button">Explore the text tool <ArrowRight size={17} /></Link>
+          </div>
+          <figure className="feature-pair">
+            <div className="pair-item prompt-demo">
+              <div className="prompt-demo-card">
+                <div className="prompt-demo-icon"><Type size={15} /></div>
+                <p>“A cozy mountain campsite at sunset, with a small tent, a crackling campfire and tall pine trees.”</p>
+                <span className="prompt-demo-hint">Your words become the scene</span>
+              </div>
+              <span>Your idea</span>
+            </div>
+            <ArrowRight className="pair-arrow" size={26} />
+            <div className="pair-item">
+              <Image src="/examples/camp-line.jpg" alt="The campsite idea turned into printable line art" width={640} height={427} sizes="(max-width: 900px) 100vw, 23vw" />
+              <span>Line art</span>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section className="panel-section" id="how-it-works">
         <SectionHeading
           eyebrow="How it works"
-          title="How to create a photo preview"
-          text="Choose a permitted photo, confirm your rights and create a preview. Check download requirements before continuing."
+          title="From photo to printable page in three steps"
+          text="Choose a permitted photo or write an original theme, preview the result, then download and print."
         />
-        <WorkflowPanel />
+        <div className="steps-grid">
+          {howItWorks.map((step, index) => {
+            const Icon = step.icon
+            return (
+              <article className="step-card" key={step.title}>
+                <span className="step-number">{index + 1}</span>
+                <div className="step-icon"><Icon size={24} /></div>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </article>
+            )
+          })}
+        </div>
       </section>
 
-      <section className="panel-section examples-section" id="examples">
+      <section className="panel-section gallery-section" id="examples">
         <SectionHeading
           eyebrow="Illustrative examples"
           title="See the idea before you use your own photo"
           text="These are original illustrations showing the kind of before-and-line-art comparison you can expect. They are examples, not generated customer results."
         />
-        <div className="example-grid">
-          {exampleCards.map((example) => (
-            <figure className="example-card" key={example.title}>
-              <Image
-                src={example.src}
-                alt={example.alt}
-                width={800}
-                height={560}
-                sizes="(max-width: 900px) 100vw, 33vw"
-              />
+        <div className="gallery-grid">
+          {gallery.map((item) => (
+            <figure className="gallery-card" key={item.title}>
+              <div className="gallery-images">
+                <Image src={item.color} alt="" width={640} height={427} sizes="(max-width: 900px) 50vw, 16vw" />
+                <Image src={item.src} alt={item.alt} width={640} height={427} sizes="(max-width: 900px) 50vw, 16vw" />
+              </div>
               <figcaption>
-                <strong>{example.title}</strong>
-                <span>Color reference → printable line-art concept</span>
+                <strong>{item.title}</strong>
+                <span>Color reference → printable line art</span>
               </figcaption>
             </figure>
           ))}
@@ -302,41 +265,6 @@ export default function Home() {
         <div className="examples-cta">
           <p>Ready to try a photo you own or have permission to use?</p>
           <Link href="/photo-to-coloring-page" className="primary-button">Create a photo preview <ArrowRight size={18} /></Link>
-        </div>
-      </section>
-
-      <section className="credit-panel" id="credits">
-        <div className="credit-copy">
-          <p className="hero-kicker">Photo previews and credits</p>
-          <h2>Current photo previews do not deduct credits.</h2>
-          <p>
-            View your current balance in Account. Returning from checkout does not confirm a payment.
-          </p>
-        </div>
-
-      </section>
-
-      <section className="panel-section boundary-section">
-        <SectionHeading
-          eyebrow="Choose suitable content"
-          title="Designed for adults preparing one meaningful page."
-        />
-        <div className="boundary-grid">
-          <article>
-            <ShieldCheck size={23} />
-            <h3>Photos you can use</h3>
-            <p>Photos you have permission to use, without student information or sensitive details. Text generation is currently unavailable.</p>
-          </article>
-          <article>
-            <X size={23} />
-            <h3>What not to submit</h3>
-            <p>Do not use student information, sensitive details, unauthorized images, protected characters or public figures. This service does not include batch creation, team accounts or commercial publishing permission.</p>
-          </article>
-          <article>
-            <BadgeCheck size={23} />
-            <h3>Know what is included</h3>
-            <p>Current photo results are PNG previews. Downloads require Google sign-in and an eligible subscription. For cancellation, refund or privacy requests, visit Support.</p>
-          </article>
         </div>
       </section>
 
@@ -353,22 +281,6 @@ export default function Home() {
         <div className="pricing-note">
           <CreditCard size={18} />
           These paid plans are monthly subscriptions. New purchases are unavailable. Before any purchase becomes available, review renewal, cancellation and total-price details.
-        </div>
-      </section>
-
-      <section className="panel-section states-section">
-        <SectionHeading
-          eyebrow="Account and payment help"
-          title="Need help with your account?"
-          text="These are help topics, not your current account status. Visit Account for your details or contact Support."
-        />
-        <div className="state-grid">
-          {states.map(([state, text]) => (
-            <article key={state}>
-              <h3>{state}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
         </div>
       </section>
 
@@ -393,16 +305,11 @@ export default function Home() {
 
       <section className="final-cta">
         <div>
-          <p>Create a photo preview</p>
+          <p><Download size={14} /> Create a photo preview</p>
           <h2>Start with a photo you have permission to use.</h2>
         </div>
         <Link href="/photo-to-coloring-page">Try the photo preview <ArrowRight size={18} /></Link>
       </section>
-
-      <footer className="footer-bar">
-        <span>Linea · coloring activities for adults</span>
-        <span><FileText size={14} /> <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/acceptable-use">Acceptable Use</Link> · <Link href="/refunds">Refunds and cancellation</Link> · <Link href="/support">Support</Link> · <Link href="/account">Account and data requests</Link></span>
-      </footer>
     </ProductLayout>
   )
 }

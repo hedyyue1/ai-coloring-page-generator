@@ -1,51 +1,28 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
-import test from 'node:test'
+import { existsSync, readFileSync } from 'node:fs'
+import { test } from 'node:test'
+import sharp from 'sharp'
 
-async function source(path: string) {
-  return readFile(new URL(`../${path}`, import.meta.url), 'utf8')
-}
+const home = readFileSync('src/screens/Home.tsx', 'utf8')
+const css = readFileSync('src/app/globals.css', 'utf8')
 
-const examples = [
-  '/examples/garden-cottage.svg',
-  '/examples/cozy-cat.svg',
-  '/examples/camping-memory.svg',
-]
+const pairs = ['cottage', 'cat', 'camp'] as const
+const expectedSize = { width: 1536, height: 930 }
 
-test('homepage includes a clearly labelled illustrative example gallery', async () => {
-  const home = await source('src/screens/Home.tsx')
-
-  assert.match(home, /id="examples"/)
-  assert.match(home, /Illustrative examples/)
-  assert.match(home, /These are original illustrations showing the kind of before-and-line-art comparison/)
-
-  for (const src of examples) {
-    assert.match(home, new RegExp(`src: '${src.replaceAll('/', '\\/')}'`))
-    assert.match(await source(`public${src}`), /<svg[\s>]/)
+test('revised gallery ships three matched color and line-art pairs', async () => {
+  for (const name of pairs) {
+    for (const variant of ['color', 'line'] as const) {
+      const path = `public/examples/${name}-${variant}.jpg`
+      assert.equal(existsSync(path), true, `${path} should exist`)
+      const { width, height } = await sharp(path).metadata()
+      assert.deepEqual({ width, height }, expectedSize, `${path} should preserve the revised pair dimensions`)
+      assert.match(home, new RegExp(`/examples/${name}-${variant}\\.jpg`))
+    }
   }
 })
 
-test('example gallery keeps responsive cards within the viewport', async () => {
-  const styles = await source('src/app/globals.css')
-
-  assert.match(styles, /\.example-grid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/)
-  assert.match(styles, /\.example-card img\s*\{[\s\S]*?width:\s*100%/)
-  assert.match(styles, /@media \(max-width: 900px\)[\s\S]*?\.example-grid\s*\{[\s\S]*?grid-template-columns:\s*1fr/)
-})
-
-test('pricing section remains on the homepage after the example gallery', async () => {
-  const home = await source('src/screens/Home.tsx')
-  const examplesIndex = home.indexOf('id="examples"')
-  const pricingIndex = home.indexOf('id="pricing"')
-
-  assert.ok(examplesIndex >= 0)
-  assert.ok(pricingIndex > examplesIndex)
-  assert.match(home, /Compare monthly plans/)
-})
-
-test('pricing cards can shrink within a 320px viewport', async () => {
-  const styles = await source('src/app/globals.css')
-
-  assert.match(styles, /@media \(max-width: 640px\)[\s\S]*?\.pricing-grid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\)/)
-  assert.match(styles, /@media \(max-width: 640px\)[\s\S]*?\.price-card\s*\{[\s\S]*?min-width:\s*0/)
+test('gallery uses a responsive three-to-one column layout without legacy artwork', () => {
+  assert.match(css, /\.gallery-grid\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*1fr\)/)
+  assert.match(css, /@media\s*\(max-width:\s*860px\)[\s\S]*?\.gallery-grid[\s\S]*?grid-template-columns:\s*1fr/)
+  assert.doesNotMatch(home, /camping-memory|cozy-cat|garden-cottage|\/workflow\//)
 })

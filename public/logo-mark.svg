@@ -1,13 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 68 68" role="img" aria-labelledby="linea-mark-title">
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-labelledby="linea-mark-title">
   <title id="linea-mark-title">Linea</title>
   <defs>
-    <linearGradient id="linea-mark-gradient" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#ea3e97"/>
-      <stop offset="1" stop-color="#8d4cf6"/>
+    <linearGradient id="mark-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ff4f8b"/>
+      <stop offset="1" stop-color="#ff8a3d"/>
     </linearGradient>
   </defs>
-  <rect x="2" y="2" width="64" height="64" rx="17" fill="url(#linea-mark-gradient)"/>
-  <path d="M19 47V25a5 5 0 0 1 5-5h19a5 5 0 0 1 5 5v22H19Z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="39" cy="29" r="4" fill="#fff"/>
-  <path d="m22 44 9-9 7 7 5-5 5 5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="3" y="3" width="58" height="58" rx="18" fill="url(#mark-gradient)"/>
+  <path d="M28.14 25.43 Q32.00 16.50 35.86 25.43 Q47.69 27.90 40.40 34.33 Q41.70 46.35 33.33 41.40 Q22.30 46.35 24.43 36.86 Q16.31 27.90 25.99 26.99 Z" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="33" r="4.6" fill="#fff"/>
+  <path d="M49.5 12.5l1.7 3.4 3.4 1.7-3.4 1.7-1.7 3.4-1.7-3.4-3.4-1.7 3.4-1.7z" fill="#ffc93c"/>
 </svg>

@@ -1,14 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import {
   ArrowRight,
   Check,
+  ChevronDown,
   CircleAlert,
-  CreditCard,
+  HelpCircle,
+  Download,
+  Layers,
   LogIn,
+  Palette,
   ScanLine,
+  ShieldCheck,
+  Sparkles,
   Type,
   UploadCloud,
 } from 'lucide-react'
@@ -22,11 +29,61 @@ const planRows = [
   { name: 'Premium', price: '$39.99', credits: '1,500', renewal: 'Renews monthly', fit: 'High-frequency adult organizers', featured: false },
 ]
 
+const pricingFaqs = [
+  [
+    'What is one coloring credit?',
+    'One credit is used only when a standard coloring page is successfully created — from either a photo you may use or your own original idea. One completed page, one credit.',
+  ],
+  [
+    'Do the photo and text tools share the same balance?',
+    'Yes. Both tools draw from a single monthly credit balance, so you never have to split or convert credits between them.',
+  ],
+  [
+    'What happens if a generation fails?',
+    'If a request fails, is rejected, or times out, the reserved credit is released back to your balance. You only spend a credit on a completed page.',
+  ],
+  [
+    'Do unused credits roll over to the next month?',
+    'No. Credits refresh at the start of each monthly cycle, and unused credits from the previous cycle expire when that cycle ends.',
+  ],
+  [
+    'How does monthly renewal work?',
+    'Paid plans renew monthly after a confirmed payment. New-cycle credits are granted only once the payment is confirmed — returning from checkout shows a pending state until then.',
+  ],
+  [
+    'How do I cancel or request a refund?',
+    'You can manage your subscription from your account page. Refund requests are reviewed through our support channel under the published Refund Policy.',
+  ],
+  [
+    'Why do I need to sign in?',
+    'Your credits are tied to your account so your balance, cycle, and credit history stay accurate and auditable. Sign-in is used only to identify your account.',
+  ],
+]
+
 const authStates = [
   ['One account', 'Keep your credits and creations connected to one account.'],
   ['Private by default', 'Linea only requests the details needed to identify your account.'],
   ['Easy return', 'If sign-in is cancelled, you can safely return and try again.'],
   ['Help available', 'Contact support if you have trouble accessing your account.'],
+]
+
+const styleOptions = [
+  { id: 'standard', label: 'Standard', text: 'Balanced outlines for all skill levels' },
+  { id: 'simple', label: 'Simple', text: 'Fewer, bolder lines — relaxed coloring' },
+  { id: 'detailed', label: 'Detailed', text: 'Fine lines for experienced colorists' },
+]
+
+const promptIdeas = [
+  'A cozy garden with flowers, watering cans, and butterflies',
+  'A seaside picnic with a lighthouse in the distance',
+  'A birthday party with balloons, cake, and presents',
+  'A woodland walk with deer, mushrooms, and tall trees',
+]
+
+const toolBenefits = [
+  { icon: Palette, title: 'Clean outlines', text: 'Clear, well-balanced lines that are a pleasure to color at any skill level.' },
+  { icon: Layers, title: 'Style choices', text: 'Pick the line weight and detail level that fits your page.' },
+  { icon: Download, title: 'Print-ready', text: 'High-resolution PNG output, ready for home or classroom printing.' },
 ]
 
 function PageHeader({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
@@ -43,13 +100,14 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
   const [rightsChecked, setRightsChecked] = useState(false)
   const [fileName, setFileName] = useState('')
   const [prompt, setPrompt] = useState('')
+  const [styleId, setStyleId] = useState(styleOptions[0].id)
   const [notice, setNotice] = useState('')
   const isPhoto = mode === 'photo'
 
   const title = isPhoto ? 'Photo to Coloring Page' : 'Text to Coloring Page'
   const description = isPhoto
-    ? 'Prepare one standard coloring page from a photo you own or are authorized to use.'
-    : 'Prepare one standard coloring page from an original adult-written theme.'
+    ? 'Upload a photo you own or are authorized to use and preview it as clean, printable line art.'
+    : 'Describe an original theme in your own words and turn it into a one-of-a-kind coloring page.'
 
   return (
     <ProductLayout>
@@ -64,16 +122,16 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
           <div className="form-step">
             <span>1</span>
             <div>
-              <h2>{isPhoto ? 'Choose a local photo' : 'Write an original theme'}</h2>
-              <p>{isPhoto ? 'The selected file stays in this browser session only.' : 'Do not enter student names, sensitive data, or protected characters.'}</p>
+              <h2>{isPhoto ? 'Upload your photo' : 'Write an original theme'}</h2>
+              <p>{isPhoto ? 'Supported formats: PNG, JPEG, JPG. The selected file stays in this browser session only.' : 'Do not enter student names, sensitive data, or protected characters.'}</p>
             </div>
           </div>
 
           {isPhoto ? (
             <label className="upload-zone">
-              <UploadCloud size={30} />
-              <strong>{fileName || 'Choose a photo'}</strong>
-              <span>Your selection stays in this browser until you continue.</span>
+              <UploadCloud size={34} />
+              <strong>{fileName || 'Drag your photo here or choose a file'}</strong>
+              <span>PNG, JPEG or JPG · your selection stays in this browser until you continue</span>
               <input
                 type="file"
                 accept="image/*"
@@ -81,19 +139,53 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
               />
             </label>
           ) : (
-            <label className="prompt-box">
-              <Type size={22} />
-              <textarea
-                value={prompt}
-                onChange={(event) => setPrompt(event.target.value)}
-                placeholder="Example: A cozy garden activity page with flowers, watering cans, and butterflies"
-                rows={6}
-              />
-            </label>
+            <>
+              <label className="prompt-box">
+                <Type size={22} />
+                <textarea
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  placeholder="Example: A cozy garden activity page with flowers, watering cans, and butterflies"
+                  rows={5}
+                />
+              </label>
+              <div className="prompt-ideas">
+                <p>Need an idea? Try one of these:</p>
+                <div>
+                  {promptIdeas.map((idea) => (
+                    <button type="button" key={idea} onClick={() => setPrompt(idea)}>{idea}</button>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           <div className="form-step">
             <span>2</span>
+            <div>
+              <h2>Choose a line-art style</h2>
+              <p>Pick the look that fits your coloring page.</p>
+            </div>
+          </div>
+
+          <div className="style-picker" role="radiogroup" aria-label="Line art style">
+            {styleOptions.map((style) => (
+              <button
+                type="button"
+                key={style.id}
+                role="radio"
+                aria-checked={style.id === styleId}
+                className={style.id === styleId ? 'style-option active' : 'style-option'}
+                onClick={() => setStyleId(style.id)}
+              >
+                <strong>{style.label}</strong>
+                <span>{style.text}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="form-step">
+            <span>3</span>
             <div>
               <h2>Confirm you can use this input</h2>
               <p>Please confirm before continuing.</p>
@@ -109,7 +201,7 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
           </label>
 
           <div className="form-step">
-            <span>3</span>
+            <span>4</span>
             <div>
               <h2>Review your request</h2>
               <p>One completed coloring page uses one credit.</p>
@@ -128,7 +220,10 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
         </article>
 
         <aside className="tool-side-stack">
-          <ComparisonCard />
+          <ComparisonCard
+            colorSrc={isPhoto ? '/examples/cottage-color.jpg' : '/examples/camp-color.jpg'}
+            lineSrc={isPhoto ? '/examples/cottage-line.jpg' : '/examples/camp-line.jpg'}
+          />
           <article className="mini-ledger-card">
             <div><ScanLine size={18} /> Credit guide</div>
             <p><span>Start a request</span><strong>1 credit held</strong></p>
@@ -136,6 +231,51 @@ export function ToolPage({ mode }: { mode: 'photo' | 'text' }) {
             <p><span>Request fails</span><strong>credit returned</strong></p>
           </article>
         </aside>
+      </section>
+
+      <section className="panel-section">
+        <div className="tool-benefits-grid">
+          {toolBenefits.map((benefit) => {
+            const Icon = benefit.icon
+            return (
+              <article key={benefit.title}>
+                <Icon size={22} />
+                <h3>{benefit.title}</h3>
+                <p>{benefit.text}</p>
+              </article>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="panel-section tool-example-section">
+        <div className="feature-split">
+          <div className="feature-copy">
+            <div className="feature-icon photo"><ShieldCheck size={22} /></div>
+            <h2>What you can expect</h2>
+            <p>
+              These original illustrations show the kind of before-and-line-art comparison you can expect
+              from a completed page. They are examples, not generated customer results.
+            </p>
+            <ul>
+              <li><Check size={16} /> Preview in your browser before using credits</li>
+              <li><Check size={16} /> Downloads require Google sign-in and an eligible subscription</li>
+              <li><Check size={16} /> Download access expires 24 hours after creation</li>
+            </ul>
+            <Link href="/pricing" className="secondary-button">Compare plans <ArrowRight size={17} /></Link>
+          </div>
+          <figure className="feature-pair">
+            <div className="pair-item">
+              <Image src="/examples/cottage-color.jpg" alt="Colorful illustration of a garden cottage" width={640} height={427} sizes="(max-width: 900px) 100vw, 23vw" />
+              <span>Photo</span>
+            </div>
+            <ArrowRight className="pair-arrow" size={26} />
+            <div className="pair-item">
+              <Image src="/examples/cottage-line.jpg" alt="The cottage illustration converted into printable line art" width={640} height={427} sizes="(max-width: 900px) 100vw, 23vw" />
+              <span>Line art</span>
+            </div>
+          </figure>
+        </div>
       </section>
     </ProductLayout>
   )
@@ -168,33 +308,34 @@ export function PricingPage() {
         ))}
       </section>
 
-      <section className="comparison-table-card">
+      <section className="pricing-faq">
         <div className="table-heading">
-          <CreditCard size={21} />
-          <h2>Plan details</h2>
+          <HelpCircle size={21} />
+          <h2>Pricing FAQ</h2>
         </div>
-        <div className="responsive-table">
-          <table>
-            <thead>
-              <tr><th>Feature</th><th>What it means</th><th>Availability</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>One credit</td><td>One completed standard coloring page</td><td>Included</td></tr>
-              <tr><td>Text and photo tools</td><td>Both tools use the same credit balance</td><td>Included</td></tr>
-              <tr><td>Failed request</td><td>The held credit is returned to your balance</td><td>Included</td></tr>
-              <tr><td>Monthly renewal</td><td>Your credits refresh with each paid cycle</td><td>Paid plans</td></tr>
-              <tr><td>Checkout</td><td>Secure online payment</td><td>Coming soon</td></tr>
-            </tbody>
-          </table>
+        <div className="faq-list">
+          {pricingFaqs.map(([question, answer], index) => (
+            <details key={question}>
+              <summary>
+                <span>{index + 1}</span>
+                {question}
+                <ChevronDown size={18} />
+              </summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 
       <section className="checkout-preview-strip">
         <div>
-          <h2>Already returned from checkout?</h2>
-          <p>Review the latest status of your payment and subscription.</p>
+          <h2>Ready to create?</h2>
+          <p>Turn a photo you may use — or your own original idea — into a printable coloring page.</p>
         </div>
-        <Link href="/checkout/pending">View payment state pages <ArrowRight size={17} /></Link>
+        <div className="strip-actions">
+          <Link href="/photo-to-coloring-page"><Sparkles size={16} /> Start with a photo</Link>
+          <Link href="/text-to-coloring-page" className="plain">Describe an idea <ArrowRight size={16} /></Link>
+        </div>
       </section>
     </ProductLayout>
   )
